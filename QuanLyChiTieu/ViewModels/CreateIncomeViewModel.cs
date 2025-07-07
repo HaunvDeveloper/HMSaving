@@ -2,6 +2,7 @@
 {
     public class CreateIncomeViewModel
     {
+        public long IncomeId { get; set; }
         public DateOnly IncomeDate { get; set; }
         public decimal TotalAmount { get; set; }
         public string? Description { get; set; }

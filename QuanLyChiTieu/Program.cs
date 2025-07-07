@@ -63,6 +63,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
 builder.Services.AddSignalR();
 
+builder.WebHost.UseUrls("http://localhost:5001");
 
 
 

@@ -35,6 +35,9 @@ public partial class QlchiTieuContext : DbContext
             entity.HasKey(e => e.ExpenseId).HasName("PK__Expenses__1445CFD397BF0CB4");
 
             entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(255);
 
             entity.HasOne(d => d.Jar).WithMany(p => p.Expenses)
@@ -61,6 +64,9 @@ public partial class QlchiTieuContext : DbContext
 
             entity.ToTable("Income");
 
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(255);
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
 
@@ -78,7 +84,6 @@ public partial class QlchiTieuContext : DbContext
 
             entity.HasOne(d => d.Income).WithMany(p => p.IncomeAllocations)
                 .HasForeignKey(d => d.IncomeId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__IncomeAll__Incom__412EB0B6");
 
             entity.HasOne(d => d.Jar).WithMany(p => p.IncomeAllocations)

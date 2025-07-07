@@ -1,7 +1,187 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Báo cáo tổng quan";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
+<div class="container py-4">
+    <h2 class="mb-4">Báo cáo tổng quan</h2>
+
+    <div class="row mb-3">
+        <div class="col-md-2">
+            <label for="monthSelect" class="form-label">Tháng</label>
+            <select id="monthSelect" class="form-select">
+                @{
+                    for (int i = 1; i <= 12; i++)
+                    {
+                        if (i == DateTime.Now.Month)
+                        {
+                            <option value="@i" selected>@i</option>
+                        }
+                        else
+                        {
+                            <option value="@i">@i</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label for="yearSelect" class="form-label">Năm</label>
+            <select id="yearSelect" class="form-select">
+                @{
+                    var currentYear = DateTime.Now.Year;
+                    for (int i = currentYear - 5; i <= currentYear; i++)
+                    {
+                        if (i == currentYear)
+                        {
+                            <option value="@i" selected>@i</option>
+                        }
+                        else
+                        {
+                            <option value="@i">@i</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end mt-2">
+            <button id="btnLoad" class="btn btn-primary w-100">
+                Tải dữ liệu
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    Biểu đồ thu nhập và chi tiêu theo ngày
+                </div>
+                <div class="card-body">
+                    <canvas id="lineChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    Chi tiêu theo hũ
+                </div>
+                <div class="card-body">
+                    <canvas id="expensePie"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    Thu nhập theo hũ
+                </div>
+                <div class="card-body">
+                    <canvas id="incomePie"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let lineChart, expensePie, incomePie;
+
+        function loadData() {
+            const month = $('#monthSelect').val();
+            const year = $('#yearSelect').val();
+
+            $.ajax({
+                url: '@Url.Action("GetReportData", "Report")',
+                type: 'GET',
+                data: { month, year },
+                success: function (result) {
+                    renderLineChart(result.daily);
+                    renderPieChart(expensePie, 'expensePie', result.expensePie);
+                    renderPieChart(incomePie, 'incomePie', result.incomePie);
+                },
+                error: function () {
+                    alert('Lỗi khi tải dữ liệu.');
+                }
+            });
+        }
+
+        function renderLineChart(data) {
+            const labels = data.map(x => x.date);
+            const income = data.map(x => x.income);
+            const expense = data.map(x => x.expense);
+
+            if (lineChart) lineChart.destroy();
+
+            lineChart = new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Thu nhập',
+                            data: income,
+                            borderColor: 'green',
+                            backgroundColor: 'rgba(0,128,0,0.1)',
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Chi tiêu',
+                            data: expense,
+                            borderColor: 'red',
+                            backgroundColor: 'rgba(255,0,0,0.1)',
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderPieChart(chartInstance, canvasId, data) {
+            const labels = data.map(x => x.label);
+            const values = data.map(x => x.value);
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(document.getElementById(canvasId), {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
+                            '#20c997', '#fd7e14', '#17a2b8'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Save reference
+            if (canvasId === 'expensePie') expensePie = chartInstance;
+            if (canvasId === 'incomePie') incomePie = chartInstance;
+        }
+
+        $(document).ready(function () {
+            $('#btnLoad').click(loadData);
+            loadData();
+        });
+    </script>
+}

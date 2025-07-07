@@ -4,6 +4,7 @@ namespace QuanLyChiTieu.ViewModels
 {
     public class CreateExpenseViewModel
     {
+        public long ExpenseId { get; set; }
         public long JarId { get; set; }
         public DateOnly ExpenseDate { get; set; }
         public decimal Amount { get; set; }

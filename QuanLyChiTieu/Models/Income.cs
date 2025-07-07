@@ -13,6 +13,8 @@ public partial class Income
 
     public decimal TotalAmount { get; set; }
 
+    public DateTime CreatedAt { get; set; }
+
     public string? Description { get; set; }
 
     public virtual ICollection<IncomeAllocation> IncomeAllocations { get; set; } = new List<IncomeAllocation>();

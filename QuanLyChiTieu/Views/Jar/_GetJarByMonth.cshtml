@@ -13,7 +13,7 @@
         <div class="card text-white bg-success shadow-sm">
             <div class="card-body">
                 <h6 class="card-title">Tổng thu nhập</h6>
-                <h4 class="card-text">
+                <h4 class="card-text fs-2">
                     @totalRevenue.ToString("C", culture)
                 </h4>
             </div>
@@ -25,7 +25,7 @@
         <div class="card text-white bg-danger shadow-sm">
             <div class="card-body">
                 <h6 class="card-title">Tổng chi tiêu</h6>
-                <h4 class="card-text">
+                <h4 class="card-text fs-2">
                     @totalCost.ToString("C", culture)
                 </h4>
             </div>
@@ -37,7 +37,7 @@
         <div class="card text-white @(remaining >= 0 ? "bg-primary" : "bg-warning") shadow-sm">
             <div class="card-body">
                 <h6 class="card-title">Còn lại</h6>
-                <h4 class="card-text">
+                <h4 class="card-text fs-2">
                     @remaining.ToString("C", culture)
                 </h4>
             </div>
@@ -64,7 +64,7 @@
                         <a href="@Url.Action("CreateExpense", "Transaction", new { jarId = jar.JarId })" class="btn btn-warning">
                             Thêm chi tiêu
                         </a>
-                        <a href="@Url.Action("Details", "Jars", new { id = jar.JarId })" class="btn btn-primary">
+                        <a href="@Url.Action("ViewByJar", "Transaction", new { jarId = jar.JarId })" class="btn btn-primary">
                             Xem chi tiết
                         </a>
                     </div>

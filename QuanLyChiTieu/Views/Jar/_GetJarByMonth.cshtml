@@ -1,0 +1,75 @@
+﻿@model List<QuanLyChiTieu.ViewModels.JarViewModel>
+@{
+    ViewData["Title"] = "_GetJarByMonth";
+    var culture = new System.Globalization.CultureInfo("vi-VN");
+    decimal totalRevenue = ViewBag.TotalRevenue ?? 0;
+    decimal totalCost = ViewBag.TotalCost ?? 0;
+    decimal remaining = totalRevenue - totalCost;
+}
+
+<div class="row g-3 mb-3">
+    <!-- Tổng thu nhập -->
+    <div class="col-md-4">
+        <div class="card text-white bg-success shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">Tổng thu nhập</h6>
+                <h4 class="card-text">
+                    @totalRevenue.ToString("C", culture)
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tổng chi tiêu -->
+    <div class="col-md-4">
+        <div class="card text-white bg-danger shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">Tổng chi tiêu</h6>
+                <h4 class="card-text">
+                    @totalCost.ToString("C", culture)
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Còn lại -->
+    <div class="col-md-4">
+        <div class="card text-white @(remaining >= 0 ? "bg-primary" : "bg-warning") shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">Còn lại</h6>
+                <h4 class="card-text">
+                    @remaining.ToString("C", culture)
+                </h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-2">
+    @foreach (var jar in Model)
+    {
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body d-flex align-items-center justify-content-between flex-wrap">
+                    <div>
+                        <h5 class="card-title mb-1">@jar.JarName</h5>
+                        <div class="text-muted text-nowrap">
+                            Số tiền còn lại:
+                            <div class="fs-2 fw-bold @(jar.TotalAmount >= 0 ? "text-success" : "text-danger") mb-0">
+                                @jar.TotalAmount.ToString("C", culture)
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="@Url.Action("CreateExpense", "Transaction", new { jarId = jar.JarId })" class="btn btn-warning">
+                            Thêm chi tiêu
+                        </a>
+                        <a href="@Url.Action("Details", "Jars", new { id = jar.JarId })" class="btn btn-primary">
+                            Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

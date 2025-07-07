@@ -1,0 +1,163 @@
+﻿@model QuanLyChiTieu.ViewModels.CreateIncomeViewModel
+
+@{
+    ViewData["Title"] = "Thêm Thu Nhập";
+    var culture = new System.Globalization.CultureInfo("vi-VN");
+}
+
+<div class="container mt-4 p-3">
+    <h2 class="mb-4">
+        <i class="bi bi-wallet2"></i> Thêm Thu Nhập
+    </h2>
+
+    <form asp-action="CreateIncome" method="post" class="needs-validation" novalidate>
+        <div class="mb-3">
+            <label asp-for="IncomeDate" class="form-label">Ngày Thu Nhập</label>
+            <input asp-for="IncomeDate" type="date" class="form-control" required />
+            <div class="invalid-feedback">Vui lòng chọn ngày thu nhập.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Tổng Số Tiền</label>
+            <div class="input-group">
+                <input id="TotalAmountInput" name="TotalAmount" value="" class="form-control text-end" placeholder="0" required />
+                <span class="input-group-text">VNĐ</span>
+            </div>
+            <div class="invalid-feedback">Vui lòng nhập tổng số tiền.</div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label">Mô tả</label>
+            <textarea asp-for="Description" class="form-control" rows="2" placeholder="Nhập ghi chú..." required></textarea>
+        </div>
+
+        <hr class="my-4" />
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="mb-0">Phân bổ vào các hũ</h4>
+            <button type="button" id="btnAllocateEvenly" class="btn btn-outline-primary btn-sm">
+                Phân bổ đều
+            </button>
+        </div>
+        <small class="text-muted">Bạn có thể phân bổ toàn bộ hoặc một phần tổng số tiền.</small>
+
+        <div class="row mt-2">
+            @for (int i = 0; i < Model.Allocations.Count; i++)
+            {
+                <div class="col-md-6 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title mb-2">@Model.Allocations[i].JarName</h6>
+                            <div class="input-group">
+                                <input class="form-control allocation-input text-end"
+                                       data-index="@i"
+                                       placeholder="0"
+                                       name="Allocations[@i].Amount" value="" />
+                                <span class="input-group-text">VNĐ</span>
+                            </div>
+                            <input type="hidden" name="Allocations[@i].JarId" value="@Model.Allocations[i].JarId" />
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="alert alert-danger d-none" id="allocationAlert">
+            Tổng phân bổ vượt quá tổng thu nhập!
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Thêm Thu Nhập
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            'use strict'
+            const forms = document.querySelectorAll('.needs-validation')
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    } else {
+                        // Bỏ dấu phẩy
+                        const totalAmount = document.getElementById('TotalAmountInput');
+                        totalAmount.value = totalAmount.value.replace(/,/g, '');
+                        document.querySelectorAll('.allocation-input').forEach(input => {
+                            input.value = input.value.replace(/,/g, '');
+                        });
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+
+        // Format số tiền realtime
+        const totalInput = document.getElementById('TotalAmountInput');
+        totalInput.addEventListener('input', function () {
+            formatCurrencyInput(this);
+            validateAllocation();
+        });
+
+        document.querySelectorAll('.allocation-input').forEach(input => {
+            input.addEventListener('input', function () {
+                formatCurrencyInput(this);
+                validateAllocation();
+            });
+        });
+
+        function formatCurrencyInput(input) {
+            let value = input.value.replace(/,/g, '').replace(/[^\d]/g, '');
+            if (value) {
+                input.value = Number(value).toLocaleString('en-US');
+            } else {
+                input.value = '';
+            }
+        }
+
+        function getNumericValue(input) {
+            return Number(input.value.replace(/,/g, '')) || 0;
+        }
+
+        function validateAllocation() {
+            const total = getNumericValue(totalInput);
+            let sum = 0;
+            document.querySelectorAll('.allocation-input').forEach(input => {
+                sum += getNumericValue(input);
+            });
+            const alert = document.getElementById('allocationAlert');
+            const submitButton = document.querySelector('button[type="submit"]');
+
+            if (sum > total) {
+                alert.classList.remove('d-none');
+                //disable button submit
+                submitButton.disabled = true;
+                return false;
+            } else {
+                alert.classList.add('d-none');
+                //enable button submit
+                submitButton.disabled = false;
+                return true;
+            }
+        }
+
+        // Nút phân bổ đều
+        document.getElementById('btnAllocateEvenly').addEventListener('click', function () {
+            const total = getNumericValue(totalInput);
+            const inputs = document.querySelectorAll('.allocation-input');
+            const perJar = Math.floor(total / inputs.length);
+            inputs.forEach(input => {
+                input.value = Number(perJar).toLocaleString('en-US');
+            });
+            validateAllocation();
+        });
+    </script>
+}

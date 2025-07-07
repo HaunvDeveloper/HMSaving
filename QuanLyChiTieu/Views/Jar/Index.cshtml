@@ -1,0 +1,85 @@
+﻿@{
+    ViewData["Title"] = "Quản lý hũ chi tiêu";
+}
+<div class="container mb-3 p-3 position-relative">
+    <h2>Danh sách hũ chi tiêu tháng @(DateTime.Now.Month)</h2>
+
+    <div class="mb-3 d-none d-md-block">
+        <button id="btnAddDesktop" class="btn btn-success">
+            <i class="bi bi-plus-lg"></i> Thêm
+        </button>
+    </div>
+
+    <div id="jarContainer"></div>
+
+    <button id="btnAddMobile"
+            class="btn btn-primary rounded-circle shadow-lg d-md-none"
+            style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; z-index:1000;">
+        <i class="bi bi-plus-lg fs-4"></i>
+    </button>
+</div>
+
+@section Links{
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            function loadData(month, year) {
+                $.ajax({
+                    url: '@Url.Action("_GetJarByMonth", "Jar")',
+                    type: 'GET',
+                    data: { month: month, year: year },
+                    beforeSend: function() {
+                        $('#jarContainer').html('<p>Đang tải dữ liệu...</p>');
+                    },
+                    success: function (result) {
+                        $('#jarContainer').html(result);
+                    },
+                    error: function () {
+                        alert('Có lỗi khi tải dữ liệu.');
+                    }
+                });
+            }
+
+            var month = new Date().getMonth() + 1;
+            var year = new Date().getFullYear();
+            loadData(month, year);
+
+            // Nút Thêm desktop
+            $('#btnAddDesktop').click(function () {
+                showAddOptions();
+            });
+
+            // Nút Thêm mobile
+            $('#btnAddMobile').click(function () {
+                showAddOptions();
+            });
+
+            // SweetAlert2 chọn thêm loại giao dịch
+            function showAddOptions() {
+                Swal.fire({
+                    title: 'Bạn muốn thêm gì?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Thêm Thu Nhập',
+                    cancelButtonText: 'Thêm Chi Tiêu',
+                    reverseButtons: true,
+                    customClass: {
+                        confirmButton: 'btn btn-success',
+                        cancelButton: 'btn btn-danger me-3'
+                    },
+                    buttonsStyling: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '@Url.Action("CreateIncome", "Transaction")';
+                    } else if (result.dismiss === Swal.DismissReason.cancel) {
+                        window.location.href = '@Url.Action("CreateExpense", "Transaction")';
+                    }
+                });
+            }
+        });
+
+    </script>
+}

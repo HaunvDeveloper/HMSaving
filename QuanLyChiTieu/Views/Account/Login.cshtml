@@ -1,0 +1,102 @@
+﻿@model QuanLyChiTieu.Models.User
+
+@{
+    Layout = "_LayoutLogin";
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="container_login" id="loginContainer">
+    <form asp-action="Login" asp-controller="Account" method="post" class="form_login mt-3">
+        <div class="text-center">
+            <div><img width="20" src="~/assets/icons/logo.png" alt=""></div>
+            <b class="title_login">HMS</b>
+        </div>
+        <div class="textbox_login">
+            <div class="form-floating mt-4">
+                @Html.TextBoxFor(x => x.Username, new { @class = "form-control", @placeholder = "Nhập tên đăng nhập" })
+                <label for="Username">Username</label>
+            </div>
+            @Html.ValidationMessageFor(x => x.Username, "", new { @class = "text-danger" })
+            <div class="form-floating mt-4 position-relative">
+                @Html.TextBoxFor(x => x.Password, new { @class = "form-control", @placeholder = "Nhập mật khẩu", @type = "password" })
+                <img style="display:none;width: 27px !important;position: absolute;right: 20px;top: 17px;" src="~/assets/icons/eye-open.svg" id="eye" />
+                <label for="Password">Password</label>
+            </div>
+            @Html.ValidationMessageFor(x => x.Password, "", new { @class = "text-danger" })
+        </div>
+        
+        <div class="text-center mt-3 mb-3">
+            <button id="login" type="submit" class="btn btn-primary p-3" style="padding: 20px 16px; color: white;">Đăng nhập</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function getParamFromCurrentUrl(key) {
+            const urlObj = new URL(window.location.href);
+            return urlObj.searchParams.get(key);
+        }
+
+        $('#Password').on('input', function () {
+            if ($(this).val()) {
+                $("#eye").css('display', 'block');
+            } else {
+                $("#eye").css('display', 'none');
+            }
+        });
+
+        $("#eye").on('click', function () {
+            let src = $(this).attr('src');
+            if ($('#Password').attr('type') == 'password') {
+                $('#Password').attr('type', 'text');
+                $(this).attr('src', src.replace('open', 'close'));
+            } else {
+                $('#Password').attr('type', 'password');
+                $(this).attr('src', src.replace('close', 'open'));
+            }
+        });
+
+        $('form').submit(function (event) {
+            event.preventDefault();
+            var data = new FormData(this);
+            var returnUrl = getParamFromCurrentUrl('ReturnUrl');
+            // Chỉ thêm returnUrl nếu nó không phải là chuỗi "null" hoặc null
+            if (returnUrl && returnUrl !== "null") {
+                data.append('ReturnUrl', returnUrl);
+            }
+            Swal.fire({
+                title: 'Đang xử lý...',
+                text: 'Vui lòng chờ giây lát',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('action'),
+                data: data,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                     Swal.close();
+                    if (response.status) {
+                        showAlert('success', "Đăng&nbsp;nhập thành&nbsp;công");
+                        localStorage.removeItem('UserAvatar');
+                        var redirectUrl = response.redirectUrl && response.redirectUrl !== "null" ? response.redirectUrl : '/';
+                        setTimeout(function () {
+                            window.location.href = redirectUrl;
+                        }, 1500);
+                    } else {
+                        showAlert("error", "Đăng nhập&nbsp;thất bại", response.message, false, false, 1000);
+                    }
+                },
+                error: function () {
+                     Swal.close();
+                    showAlert("error", "Lỗi", "Đã xảy ra lỗi trong quá trình đăng nhập. Vui lòng thử lại sau.", false, false, 1000);
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,26 @@
+﻿@model QuanLyChiTieu.ViewModels.CreateExpenseJarViewModel
+
+@{
+    ViewData["Title"] = "Tạo Hũ Chi Tiêu";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3"><i class="bi bi-archive"></i> Tạo Hũ Chi Tiêu</h2>
+
+    <form asp-action="Create" method="post" class="needs-validation">
+        <div class="mb-3">
+            <label asp-for="JarName" class="form-label">Tên Hũ</label>
+            <input asp-for="JarName" class="form-control" required />
+            <span asp-validation-for="JarName" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Tạo
+        </button>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

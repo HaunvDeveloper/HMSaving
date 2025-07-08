@@ -82,4 +82,42 @@
         });
 
     </script>
+    <script>
+       $(document).on('click', '.btnAddJar', function () {
+             Swal.fire({
+             title: 'Nhập tên hũ',
+             input: 'text',
+             inputLabel: 'Tên hũ chi tiêu',
+             inputPlaceholder: 'VD: Tiết kiệm, Mua sắm...',
+             showCancelButton: true,
+             confirmButtonText: 'Thêm',
+             cancelButtonText: 'Hủy',
+             inputValidator: (value) => {
+                 if (!value) {
+                     return 'Bạn chưa nhập tên hũ!';
+                 }
+             }
+         }).then((result) => {
+             if (result.isConfirmed) {
+                 const jarName = result.value;
+
+                 // Gửi request POST đến action Create
+                 $.ajax({
+                     url: '/JarInfo/Create',
+                     method: 'POST',
+                     data: {
+                         JarName: jarName
+                     },
+                     success: function (response) {
+                         showToast('success', 'Thành công');
+                          window.location.reload();
+                     },
+                     error: function (xhr) {
+                         Swal.fire('Lỗi', xhr.responseText || 'Không thể thêm hũ.', 'error');
+                     }
+                 });
+             }
+         });
+        });
+    </script>
 }

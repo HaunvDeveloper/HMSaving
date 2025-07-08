@@ -1,0 +1,204 @@
+﻿@model List<EatingDayStat>
+@{
+    var culture = new System.Globalization.CultureInfo("vi-VN");
+    var today = DateTime.Today;
+
+    var daysInMonth = Model.OrderBy(x => x.Date).ToList();
+    var firstDayOfMonth = daysInMonth.FirstOrDefault()?.Date ?? DateTime.Today;
+    var totalDays = DateTime.DaysInMonth(firstDayOfMonth.Year, firstDayOfMonth.Month);
+    var calendar = new List<List<EatingDayStat?>>(); // List tuần
+
+    int dayOffset = ((int)firstDayOfMonth.DayOfWeek + 6) % 7; // Đưa Chủ nhật (0) về cuối
+    var currentWeek = new List<EatingDayStat?>();
+
+    // Bổ sung ngày trắng đầu tuần
+    for (int i = 0; i < dayOffset; i++) currentWeek.Add(null);
+
+    foreach (var day in daysInMonth)
+    {
+        currentWeek.Add(day);
+        if (currentWeek.Count == 7)
+        {
+            calendar.Add(currentWeek);
+            currentWeek = new List<EatingDayStat?>();
+        }
+    }
+
+    // Bổ sung ngày trắng cuối tháng
+    if (currentWeek.Count > 0)
+    {
+        while (currentWeek.Count < 7) currentWeek.Add(null);
+        calendar.Add(currentWeek);
+    }
+
+    var avergagePerDay = Model.Select(x => x.AveragePerDay).FirstOrDefault();
+    var totalRevenue = ViewBag.TotalEatingMoney as decimal?;
+    var totalCost = Model.Select(x => x.SpentAmount).Sum();
+    var remaining = totalRevenue.HasValue ? totalRevenue.Value - totalCost : 0m;
+}
+
+<div class="container p-4">
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <div class="card text-white bg-success shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Tổng tiền ăn</h6>
+                    <h4 class="card-text fs-4">
+                        @totalRevenue?.ToString("C", culture)
+                    </h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-primary shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Trung bình tiền ăn</h6>
+                    <h4 class="card-text fs-4">
+                        @avergagePerDay.ToString("C", culture)
+                    </h4>
+                </div>
+            </div>
+        </div>
+        <!-- Tổng chi tiêu -->
+        <div class="col-md-3">
+            <div class="card text-white bg-danger shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Tổng chi tiêu</h6>
+                    <h4 class="card-text fs-4">
+                        @totalCost.ToString("C", culture)
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Còn lại -->
+        <div class="col-md-3">
+            <div class="card text-white @(remaining >= 0 ? "bg-primary" : "bg-warning") shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Còn lại</h6>
+                    <h4 class="card-text fs-2">
+                        @remaining.ToString("C", culture)
+                    </h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .calendar-card {
+        font-size: 0.75rem; /* Nhỏ gọn hơn */
+        padding: 0.5rem;
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .calendar-card:hover{
+            transform: scale(1.05);
+        }
+
+        .calendar-card .card-body {
+            padding: 0.5rem;
+        }
+
+        .calendar-card h6 {
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .calendar-card .badge {
+            font-size: 0.6rem;
+        }
+
+        .calendar-card .card-text {
+            margin-bottom: 0.25rem;
+        }
+
+        .calendar-card .col{
+        }
+    @@media (min-width: 1200px){
+        .container-calendar{
+            max-width: 1320px;
+            margin-left:auto;
+            margin-right: auto;
+        }
+    }
+    @@media (max-width:766px){
+        .calendar-card {
+            font-size: 0.4rem; /* Nhỏ gọn hơn */
+            padding: 0.2rem;
+        }
+
+
+
+            .calendar-card h6{
+                font-size: 0.6rem;
+            }
+
+        .calendar-card .badge{
+                font-size: 0.4rem;
+                padding: 0.1rem 0.2rem;
+        }
+    }
+
+    @@media (max-width:577px) {
+        .calendar-card {
+            font-size: 0.4rem; /* Nhỏ gọn hơn */
+            padding: 0.1rem;
+        }
+
+            .calendar-card .hidden-sm {
+                display: none;
+            }
+        .calendar-card col-3{
+            width:35px !important
+        }
+    }
+</style>
+
+<div class="container px-1">
+    <div class="row fw-bold text-center mb-1 small">
+        <div class="col text-truncate">T2</div>
+        <div class="col text-truncate">T3</div>
+        <div class="col text-truncate">T4</div>
+        <div class="col text-truncate">T5</div>
+        <div class="col text-truncate">T6</div>
+        <div class="col text-truncate">T7</div>
+        <div class="col text-truncate">CN</div>
+    </div>
+
+    @foreach (var week in calendar)
+    {
+        <div class="row g-1 mb-1">
+            @foreach (var day in week)
+            {
+                <div class="col col-sm calendar-card">
+                    @if (day != null)
+                    {
+                        var isToday = day.Date.Date == today;
+                        var borderClass = day.Difference > 0 ? "success" : "danger";
+                        var highlightClass = isToday ? "bg-info bg-opacity-25 border-3" : "";
+
+                        <div class="card shadow-sm border-@borderClass @highlightClass h-100">
+                            <div class="card-body p-1">
+                                <h6 class="text-@borderClass  fw-bold">
+                                    <span class="hidden-sm">Ngày</span> @day.Date.Day
+                                   
+                                </h6>
+                                <div>
+                                    <div><strong class="hidden-sm">TB:</strong> <span class="text-primary fw-bold">@day.AveragePerDay.ToString("C0", culture)</span></div>
+                                    <div><strong class="hidden-sm">Chi:</strong> <span class="text-danger fw-bold">@day.SpentAmount.ToString("C0", culture)</span></div>
+                                    <div>
+                                        <strong class="hidden-sm">Còn:</strong>
+                                        <span class="text-@(day.Difference > 0 ? "success  fw-bold" : "danger fw-bold")">
+                                            @(day.Difference >= 0 ? "+" : "-")@Math.Abs(day.Difference).ToString("C0", culture)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,97 @@
+﻿@{
+    ViewData["Title"] = "Công Nợ giao dịch";
+    var culture = new System.Globalization.CultureInfo("vi-VN");
+}
+
+<div class="container mt-4 p-3">
+    <h2 class="text-center text-uppercase">Danh sách Con Nợ</h2>
+    <div class="mb-3 d-none d-md-block">
+        <button id="btnAddDesktop" class="btn btn-success btnAddPartner">
+            <i class="bi bi-plus-lg"></i> Thêm đối tác
+        </button>
+    </div>
+    <div id="debtSummaryContainer"></div>
+
+    <button id="btnAddMobile"
+            class="btn btn-primary rounded-circle shadow-lg d-md-none btnAddPartner"
+            style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; z-index:1000;">
+        <i class="bi bi-plus-lg fs-4"></i>
+    </button>
+</div>
+@section Links {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+}
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            $('#debtSummaryContainer').load('/Debt/DebtSummaryPartial');
+            // Add event listener for opening and closing details
+            $('#transactionsTable tbody').on('click', 'td.details-control', function () {
+                var tr = $(this).closest('tr');
+                var row = table.row(tr);
+
+                if (row.child.isShown()) {
+                    // Close
+                    row.child.hide();
+                    tr.removeClass('shown');
+                } else {
+                    // Open
+                    var data = row.data();
+                    if (data.type === "Thu Nhập" && data.allocations && data.allocations.length > 0) {
+                        var html = '<table class="table table-sm table-bordered mb-0">';
+                        html += '<thead><tr class="table-info"><th>Hũ</th><th>Số tiền</th></tr></thead><tbody>';
+                        data.allocations.forEach(function (alloc) {
+                            html += '<tr><td>' + alloc.jarName + '</td><td>' + parseFloat(alloc.amount).toLocaleString("vi-VN") + ' VNĐ</td></tr>';
+                        });
+                        html += '</tbody></table>';
+                        row.child(html).show();
+                    } else {
+                        row.child('<em>Không có dữ liệu chi tiết.</em>').show();
+                    }
+                    tr.addClass('shown');
+                }
+            });
+
+
+           
+        });
+    </script>
+
+    <script>
+        $('.btnAddPartner').click(function () {
+            Swal.fire({
+                title: 'Thêm đối tác mới',
+                input: 'text',
+                inputLabel: 'Tên đối tác',
+                inputPlaceholder: 'Nhập tên đối tác...',
+                showCancelButton: true,
+                confirmButtonText: 'Thêm',
+                cancelButtonText: 'Hủy',
+                preConfirm: (name) => {
+                    if (!name) {
+                        Swal.showValidationMessage('Vui lòng nhập tên đối tác');
+                        return false;
+                    }
+                    return fetch('/Partner/QuickCreate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        body: JSON.stringify({ partnerName: name })
+                    }).then(res => {
+                        if (!res.ok) throw new Error('Thêm thất bại');
+                        return res.json();
+                    }).catch(err => {
+                        Swal.showValidationMessage(`Lỗi: ${err}`);
+                    });
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    window.location.reload();
+                }
+            });
+        });
+    </script>
+}

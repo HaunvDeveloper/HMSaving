@@ -53,7 +53,7 @@ namespace QuanLyChiTieu.Controllers
                 var authProperties = new AuthenticationProperties
                 {
                     IsPersistent = true,
-                    ExpiresUtc = DateTime.UtcNow.AddHours(3)
+                    ExpiresUtc = DateTime.UtcNow.AddDays(3)
                 };
 
                 await HttpContext.SignInAsync(principal, authProperties);

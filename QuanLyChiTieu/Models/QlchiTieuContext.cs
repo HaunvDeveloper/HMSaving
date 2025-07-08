@@ -15,6 +15,8 @@ public partial class QlchiTieuContext : DbContext
     {
     }
 
+    public virtual DbSet<Debt> Debts { get; set; }
+
     public virtual DbSet<Expense> Expenses { get; set; }
 
     public virtual DbSet<ExpenseJar> ExpenseJars { get; set; }
@@ -23,6 +25,10 @@ public partial class QlchiTieuContext : DbContext
 
     public virtual DbSet<IncomeAllocation> IncomeAllocations { get; set; }
 
+    public virtual DbSet<Partner> Partners { get; set; }
+
+    public virtual DbSet<PayDebt> PayDebts { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -30,6 +36,28 @@ public partial class QlchiTieuContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Debt>(entity =>
+        {
+            entity.ToTable("Debt");
+
+            entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.DebtDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(100);
+
+            entity.HasOne(d => d.Partner).WithMany(p => p.Debts)
+                .HasForeignKey(d => d.PartnerId)
+                .HasConstraintName("FK_Debt_Partner");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Debts)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK_Debt_Users");
+        });
+
         modelBuilder.Entity<Expense>(entity =>
         {
             entity.HasKey(e => e.ExpenseId).HasName("PK__Expenses__1445CFD397BF0CB4");
@@ -48,14 +76,14 @@ public partial class QlchiTieuContext : DbContext
 
         modelBuilder.Entity<ExpenseJar>(entity =>
         {
-            entity.HasKey(e => e.JarId).HasName("PK__ExpenseJ__A7EC00F9B716F2B6");
+            entity.HasKey(e => e.JarId).HasName("PK__ExpenseJ__A7EC00F9B0C5ED0C");
 
             entity.Property(e => e.JarName).HasMaxLength(100);
 
             entity.HasOne(d => d.User).WithMany(p => p.ExpenseJars)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ExpenseJa__UserI__3E52440B");
+                .HasConstraintName("FK__ExpenseJa__UserI__4316F928");
         });
 
         modelBuilder.Entity<Income>(entity =>
@@ -78,7 +106,7 @@ public partial class QlchiTieuContext : DbContext
 
         modelBuilder.Entity<IncomeAllocation>(entity =>
         {
-            entity.HasKey(e => e.AllocationId).HasName("PK__IncomeAl__B3C6D64B4A4905BA");
+            entity.HasKey(e => e.AllocationId).HasName("PK__IncomeAl__B3C6D64B9D43FC97");
 
             entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
 
@@ -89,16 +117,47 @@ public partial class QlchiTieuContext : DbContext
             entity.HasOne(d => d.Jar).WithMany(p => p.IncomeAllocations)
                 .HasForeignKey(d => d.JarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__IncomeAll__JarId__4222D4EF");
+                .HasConstraintName("FK__IncomeAll__JarId__46E78A0C");
+        });
+
+        modelBuilder.Entity<Partner>(entity =>
+        {
+            entity.ToTable("Partner");
+
+            entity.Property(e => e.BalanceAmountDebt).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Description).HasMaxLength(100);
+            entity.Property(e => e.PartnerName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<PayDebt>(entity =>
+        {
+            entity.ToTable("PayDebt");
+
+            entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(100);
+            entity.Property(e => e.PaymentDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Partner).WithMany(p => p.PayDebts)
+                .HasForeignKey(d => d.PartnerId)
+                .HasConstraintName("FK_PayDebt_Partner");
+
+            entity.HasOne(d => d.User).WithMany(p => p.PayDebts)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK_PayDebt_Users");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C7CC46C05");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C0A0ACDCD");
 
-            entity.HasIndex(e => e.Username, "UQ__Users__536C85E43D649825").IsUnique();
+            entity.HasIndex(e => e.Username, "UQ__Users__536C85E4D5A5C462").IsUnique();
 
-            entity.HasIndex(e => e.Email, "UQ__Users__A9D10534F3843966").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Users__A9D10534A3F98054").IsUnique();
 
             entity.Property(e => e.Email).HasMaxLength(255);
             entity.Property(e => e.Password).HasMaxLength(255);

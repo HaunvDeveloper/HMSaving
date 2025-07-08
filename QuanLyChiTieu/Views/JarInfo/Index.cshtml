@@ -1,0 +1,109 @@
+﻿@{
+    ViewData["Title"] = "Loại Hũ";
+    var culture = new System.Globalization.CultureInfo("vi-VN");
+}
+
+<div class="container mt-4 p-3">
+    <h2 class="text-center text-uppercase">Danh sách Loại Hũ</h2>
+    <div class="mb-3 d-none d-md-block">
+        <a id="btnAddDesktop" class="btn btn-success" asp-action="Create">
+            <i class="bi bi-plus-lg"></i> Thêm
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table id="transactionsTable" class="table table-sm table-striped  table-hover" style="width:100%;">
+            <thead>
+                <tr class="table-primary">
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <a id="btnAddMobile" asp-action="Create"
+            class="btn btn-primary rounded-circle shadow-lg d-md-none"
+            style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; z-index:1000;">
+        <i class="bi bi-plus-lg fs-4"></i>
+    </a>
+</div>
+@section Links {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+}
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var table = $('#transactionsTable').DataTable({
+                "ajax": {
+                    "url": '@Url.Action("GetJarList", "JarInfo")',
+                    "type": 'GET',
+                    "datatype": 'json'
+                },
+                "columns": [
+                    { "data": 'jarId' },
+                    { "data": 'jarName' },
+                    {
+                        "data" : "jarId",
+                        "render": function (data, type, row) {
+                            return `<div class="text-end">
+                                        <a href="/jarinfo/edit/${data}" class="btn btn-sm btn-warning me-1" title="Chỉnh sửa">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <a href="#" data-url="/jarinfo/delete/${data}" class="btn-delete btn btn-sm btn-danger" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>`;
+                        },
+                    }
+
+                ],
+                "order": [[2, 'desc']],
+                "language": {
+                    "url": '//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json'
+                }
+            });
+
+
+
+
+            $(document).on('click', '.btn-delete', function(){
+                var url = $(this).data('url');
+                Swal.fire({
+                    title: 'Bạn có chắc chắn muốn xóa hũ này?',
+                    text: "Hành động này không thể hoàn tác!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Xóa',
+                    cancelButtonText: 'Hủy',
+                    customClass: {
+                        confirmButton: 'btn btn-danger',
+                        cancelButton: 'btn btn-secondary'
+                    },
+                    buttonsStyling: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            success: function (res) {
+                                if(res.status)
+                                {
+                                    showToast('success', 'Xóa thành công!');
+                                    table.ajax.reload();
+                                }
+                                else{
+                                    Swal.fire('Lỗi!', 'Không thể xóa ' + res.message, 'error');
+                                }
+                            },
+                            error: function () {
+                                Swal.fire('Lỗi!', 'Không thể xóa.', 'error');
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

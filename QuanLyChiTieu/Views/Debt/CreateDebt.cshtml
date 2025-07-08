@@ -1,0 +1,147 @@
+﻿@model QuanLyChiTieu.ViewModels.CreateDebtViewModel
+
+@{
+    ViewData["Title"] = "Thêm Nợ";
+    var partners = ViewBag.Partners as List<Partner>;
+}
+@section Links {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+}
+<div class="container p-3 mt-4">
+    <h2>Thêm Khoản Nợ</h2>
+
+    <form asp-action="CreateDebt" method="post">
+        <div class="mb-3">
+            <label for="PartnerId" class="form-label">Đối tác</label>
+            <div class="input-group">
+                <select id="PartnerId" name="PartnerId" class="form-select" required>
+                    <option value="">-- Chọn đối tác --</option>
+                    @if (partners != null && partners.Any())
+                    {
+                        @foreach (var partner in partners)
+                        {
+                            <option value="@partner.PartnerId">@partner.PartnerName</option>
+                        }
+                    }
+                    
+                </select>
+                <button type="button" class="btn btn-info" id="btnAddPartner">
+                    <i class="bi bi-plus"></i> Thêm đối tác
+                </button>
+            </div>
+        </div>
+
+
+        <div class="mb-3">
+            <label class="form-label">Loại công nợ</label><br />
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" asp-for="InDebt" value="true" />
+                <label class="form-check-label">Tôi nợ</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" asp-for="InDebt" value="false" />
+                <label class="form-check-label">Đối tác nợ tôi</label>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Amount" class="form-label">Số tiền</label>
+            <div class="input-group">
+                <input asp-for="Amount" id="AmountInput" class="form-control text-end" placeholder="0" value="" required />
+                <span class="input-group-text">.000 VNĐ</span>
+            </div>
+        </div>
+
+
+        <div class="mb-3">
+            <label asp-for="DebtDate" class="form-label">Ngày ghi nợ</label>
+            <input asp-for="DebtDate" type="date" class="form-control" required />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label">Ghi chú</label>
+            <textarea asp-for="Description" class="form-control"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Thêm Nợ</button>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </form>
+</div>
+@section Scripts {
+    <script>
+        var initPartnerId = getParamFromCurrentUrl('partnerId');
+        if (initPartnerId) {
+            document.getElementById('PartnerId').value = initPartnerId;
+        }
+
+
+        const input = document.getElementById("AmountInput");
+
+        // Format khi gõ
+        input.addEventListener("input", function () {
+            let value = this.value.replace(/,/g, "").replace(/[^\d]/g, "");
+            if (value) {
+                this.value = Number(value).toLocaleString("en-US");
+            } else {
+                this.value = "";
+            }
+        });
+
+        // Bootstrap validation + bỏ dấu phẩy khi submit
+        (() => {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    } else {
+                        // Bỏ dấu phẩy trước khi gửi đi
+                        input.value = input.value.replace(/,/g, "");
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
+
+    <script>
+        $('#btnAddPartner').click(function () {
+            Swal.fire({
+                title: 'Thêm đối tác mới',
+                input: 'text',
+                inputLabel: 'Tên đối tác',
+                inputPlaceholder: 'Nhập tên đối tác...',
+                showCancelButton: true,
+                confirmButtonText: 'Thêm',
+                cancelButtonText: 'Hủy',
+                preConfirm: (name) => {
+                    if (!name) {
+                        Swal.showValidationMessage('Vui lòng nhập tên đối tác');
+                        return false;
+                    }
+                    return fetch('/Partner/QuickCreate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        body: JSON.stringify({ partnerName: name })
+                    }).then(res => {
+                        if (!res.ok) throw new Error('Thêm thất bại');
+                        return res.json();
+                    }).catch(err => {
+                        Swal.showValidationMessage(`Lỗi: ${err}`);
+                    });
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    const newOption = new Option(result.value.partnerName, result.value.partnerId, true, true);
+                    $('#PartnerId').append(newOption).trigger('change');
+                    Swal.fire('Đã thêm!', 'Đối tác đã được thêm.', 'success');
+                }
+            });
+        });
+    </script>
+}

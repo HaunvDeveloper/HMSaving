@@ -287,6 +287,8 @@ namespace QuanLyChiTieu.Controllers
                         }).ToList()
                 };
 
+
+
                 _context.Incomes.Add(income);
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Index");
@@ -375,11 +377,11 @@ namespace QuanLyChiTieu.Controllers
             foreach (var allocation in model.Allocations)
             {
                 var existing = income.IncomeAllocations.FirstOrDefault(a => a.JarId == allocation.JarId);
-                if (existing != null)
+                if (existing != null && existing.Amount > 0)
                 {
                     existing.Amount = allocation.Amount;
                 }
-                else
+                else if (allocation.Amount > 0)
                 {
                     income.IncomeAllocations.Add(new IncomeAllocation
                     {
@@ -387,15 +389,20 @@ namespace QuanLyChiTieu.Controllers
                         Amount = allocation.Amount
                     });
                 }
+                else if (existing != null)
+                {
+                    _context.IncomeAllocations.Remove(existing);
+                }
             }
 
             // Remove allocations that are no longer present
             var jarIds = model.Allocations.Select(a => a.JarId).ToHashSet();
 
             var notRemovedAllocations = income.IncomeAllocations
-                .Where(a => jarIds.Contains(a.JarId))
+                .Where(a => jarIds.Contains(a.JarId) && a.Amount > 0)
                 .ToList();
             income.IncomeAllocations = notRemovedAllocations;
+
 
             await _context.SaveChangesAsync();
 

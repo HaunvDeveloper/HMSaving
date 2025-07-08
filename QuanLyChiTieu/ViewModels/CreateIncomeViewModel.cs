@@ -1,7 +1,10 @@
-﻿namespace QuanLyChiTieu.ViewModels
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace QuanLyChiTieu.ViewModels
 {
     public class CreateIncomeViewModel
     {
+        [NotMapped]
         public long IncomeId { get; set; }
         public DateOnly IncomeDate { get; set; }
         public decimal TotalAmount { get; set; }

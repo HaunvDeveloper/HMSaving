@@ -93,6 +93,9 @@
                         totalAmount.value = totalAmount.value.replace(/,/g, '');
                         document.querySelectorAll('.allocation-input').forEach(input => {
                             input.value = input.value.replace(/,/g, '');
+                            if(input.value === '') {
+                                input.value = '0'; // Đặt giá trị mặc định là 0 nếu không có giá trị
+                            }
                         });
                     }
                     form.classList.add('was-validated')
@@ -135,13 +138,22 @@
             });
             const alert = document.getElementById('allocationAlert');
             const submitButton = document.querySelector('button[type="submit"]');
-
+            console.log(sum, total);
             if (sum > total) {
                 alert.classList.remove('d-none');
+                alert.textContent = 'Tổng phân bổ vượt quá tổng thu nhập!';
                 //disable button submit
                 submitButton.disabled = true;
                 return false;
-            } else {
+            } 
+            else if(sum < total){
+                alert.classList.remove('d-none');
+                alert.textContent = 'Tổng phân bổ chưa đủ tổng thu nhập!';
+                //disable button submit
+                submitButton.disabled = true;
+                return false;
+            }
+            else {
                 alert.classList.add('d-none');
                 //enable button submit
                 submitButton.disabled = false;

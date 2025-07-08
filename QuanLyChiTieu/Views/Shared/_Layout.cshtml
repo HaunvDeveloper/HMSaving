@@ -59,7 +59,16 @@
                             <a class="nav-link @(currentController == "Jar" ? "active" : "")" asp-action="Index" asp-controller="Jar">Hũ Thu chi</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link @(currentController == "Dayly" ? "active" : "")" asp-action="Index" asp-controller="Dayly">Tiền ăn trong ngày</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link @(currentController == "Transaction" ? "active" : "")" asp-action="Index" asp-controller="Transaction">Giao dịch</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "JarInfo" ? "active" : "")" asp-action="Index" asp-controller="JarInfo">Loại Hũ</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Debt" ? "active" : "")" asp-action="Index" asp-controller="Debt">Nợ</a>
                         </li>
                         @* <li class="nav-item">
                             <a class="nav-link @(currentController == "Report" ? "active" : "")" asp-action="Index" asp-controller="Report">Báo cáo</a>

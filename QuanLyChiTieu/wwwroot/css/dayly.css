@@ -1,0 +1,116 @@
+﻿.calendar-card {
+    font-size: 0.75rem; /* Nhỏ gọn hơn */
+    padding: 0.5rem;
+    transition: transform 0.2s ease-in-out;
+}
+
+    .calendar-card:hover {
+        transform: scale(1.05);
+    }
+
+    .calendar-card .card-body {
+        padding: 0.5rem;
+    }
+
+    .calendar-card h6 {
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .calendar-card .badge {
+        font-size: 0.6rem;
+    }
+
+    .calendar-card .card-text {
+        margin-bottom: 0.25rem;
+    }
+
+    .calendar-card .col {
+    }
+
+@media (min-width: 1200px) {
+    .container-calendar {
+        max-width: 1320px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+@media (max-width:991px) {
+    .calendar-card {
+        font-size: 0.4rem; /* Nhỏ gọn hơn */
+        padding: 0.2rem;
+    }
+
+        .calendar-card .hidden-sm {
+            display: none !important;
+        }
+        .calendar-card .date-name {
+            font-size: 1rem;
+        }
+
+        .calendar-card h6 {
+            font-size: 0.6rem;
+        }
+
+        .calendar-card .badge {
+            font-size: 0.4rem;
+            padding: 0.1rem 0.2rem;
+        }
+        .calendar-card .diff-amount {
+            font-size: 0.8rem;
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+}
+
+@media (max-width:577px) {
+    .calendar-card {
+        font-size: 0.4rem; /* Nhỏ gọn hơn */
+        padding: 0.1rem;
+    }
+
+        .calendar-card .hidden-sm {
+            display: none !important;
+        }
+
+        .calendar-card col-3 {
+            width: 35px !important
+        }
+
+        .calendar-card .date-name {
+            font-size: 0.7rem;
+        }
+        .calendar-card .diff-amount {
+            font-size: 0.5rem;
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+}
+
+@media (max-width: 360px){
+    .calendar-card {
+        font-size: 0.3rem; /* Nhỏ gọn hơn */
+        padding: 0.1rem;
+    }
+
+        .calendar-card .card-body {
+            /*Center*/
+            text-align: center;
+        }
+
+        .calendar-card .badge {
+            font-size: 0.3rem;
+            padding: 0.1rem 0.2rem;
+        }
+
+        .calendar-card .diff-amount {
+            display: none;
+        }
+}

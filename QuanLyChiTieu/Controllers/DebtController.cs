@@ -41,6 +41,7 @@ namespace QuanLyChiTieu.Controllers
                         // Cộng lại số tiền mình đã trả
                         + p.PayDebts.Where(pd => pd.UserId == userId && pd.InDebt).Sum(pd => pd.Amount)
                 })
+                .OrderByDescending(p => Math.Abs(p.NetDebtAmount))
                 .ToListAsync();
 
             return PartialView(data);

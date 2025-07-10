@@ -2,10 +2,26 @@
 @{
     ViewData["Title"] = "Giao dịch";
     var culture = new System.Globalization.CultureInfo("vi-VN");
+    var fromDate = ViewBag.FromDate as DateOnly?;
+    var toDate = ViewBag.ToDate as DateOnly?;
 }
 
 <div class="container mt-4 p-3">
-    <h2 class="text-center text-uppercase">Giao dịch  <strong class="text-danger">HŨ @Model.JarName</strong></h2>
+    <h2 class="text-center text-uppercase">
+        Giao dịch  <strong class="text-danger">HŨ @Model.JarName</strong> 
+        @if (fromDate != null && toDate != null)
+        {
+            if(fromDate != toDate)
+            {
+                <span class="text-muted">từ @fromDate.Value.ToString("dd/MM/yyyy") đến @toDate.Value.ToString("dd/MM/yyyy")</span>
+
+            }
+            else
+            {
+                <span class="text-muted">NGÀY @fromDate.Value.ToString("dd/MM/yyyy")</span>
+            }
+        }
+    </h2>
     <div class="mb-3 d-none d-md-block">
         <button id="btnAddDesktop" class="btn btn-success">
             <i class="bi bi-plus-lg"></i> Thêm
@@ -40,10 +56,17 @@
             $('#transactionsTable').DataTable({
                 "processing": true,
                 "searching": true,
+                "processing": true,
+                "lengthMenu": [5, 10, 25, 50, 100],
+                "pageLength": 25,
                 "ajax": {
                     "url": "/Transaction/GetTransactionByJar",
                     "type": "GET",
-                    "data": { jarId: @(Model.JarId) }
+                    "data": { 
+                        jarId: @(Model.JarId),
+                        fromDate: getParamFromCurrentUrl('fromDate'),
+                        toDate: getParamFromCurrentUrl('toDate')
+                    }
                 },
                 "columns": [
                     { "data": "type" },

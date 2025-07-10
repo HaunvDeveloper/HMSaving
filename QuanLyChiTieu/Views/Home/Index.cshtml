@@ -1,11 +1,18 @@
 ﻿@{
     ViewData["Title"] = "Báo cáo tổng quan";
+    var jars = ViewBag.Jars as SelectList;
 }
 
 <div class="container py-4">
     <h2 class="mb-4">Báo cáo tổng quan</h2>
 
     <div class="row mb-3">
+        <div class="col-md-2">
+            <label for="jarSelect" class="form-label">Hũ</label>
+            <select class="form-select" id="jarSelect" asp-items="jars">
+                <option value="">-- Tất cả --</option>
+            </select>
+        </div>
         <div class="col-md-2">
             <label for="monthSelect" class="form-label">Tháng</label>
             <select id="monthSelect" class="form-select">
@@ -95,15 +102,25 @@
         function loadData() {
             const month = $('#monthSelect').val();
             const year = $('#yearSelect').val();
-
+            const jarId = $('#jarSelect').val();
             $.ajax({
                 url: '@Url.Action("GetReportData", "Report")',
                 type: 'GET',
-                data: { month, year },
+                data: { jarId, month, year },
                 success: function (result) {
                     renderLineChart(result.daily);
-                    renderPieChart(expensePie, 'expensePie', result.expensePie);
-                    renderPieChart(incomePie, 'incomePie', result.incomePie);
+                    if(!jarId){
+                        renderPieChart(expensePie, 'expensePie', result.expensePie);
+                        renderPieChart(incomePie, 'incomePie', result.incomePie);
+                        //show chart 
+                        $('#expensePie').parent().parent().show();
+                        $('#incomePie').parent().parent().show();
+                    }
+                    else{
+                        //hide chart
+                        $('#expensePie').parent().parent().hide();
+                        $('#incomePie').parent().parent().hide();
+                    }
                 },
                 error: function () {
                     alert('Lỗi khi tải dữ liệu.');
@@ -115,6 +132,7 @@
             const labels = data.map(x => x.date);
             const income = data.map(x => x.income);
             const expense = data.map(x => x.expense);
+            const remain = data.map(x => x.remain);
 
             if (lineChart) lineChart.destroy();
 
@@ -135,6 +153,13 @@
                             data: expense,
                             borderColor: 'red',
                             backgroundColor: 'rgba(255,0,0,0.1)',
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Số dư',
+                            data: remain,
+                            borderColor: 'blue',
+                            backgroundColor: 'rgba(0,0,255,0.1)',
                             tension: 0.2
                         }
                     ]

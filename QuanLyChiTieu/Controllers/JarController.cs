@@ -41,6 +41,17 @@ namespace QuanLyChiTieu.Controllers
                 .Where(e => e.Jar.UserId == userId && e.ExpenseDate.Month == month && e.ExpenseDate.Year == year)
                 .SumAsync(e => (decimal?)e.Amount) ?? 0;
 
+            var firstDayInMonth = new DateOnly(year.Value, month.Value, 1);
+            //Tổng dư trước kỳ
+            var totalBefore = (await _context.Incomes
+                .Where(x => x.UserId == userId && x.IncomeDate < firstDayInMonth)
+                .SumAsync(x => (decimal?)x.TotalAmount) ?? 0)
+                -
+                (await _context.Expenses
+                    .Where(e => e.Jar.UserId == userId && e.ExpenseDate < firstDayInMonth)
+                    .SumAsync(e => (decimal?)e.Amount) ?? 0)
+                ;
+
             // Lấy danh sách hũ
             var jars = await _context.ExpenseJars
                 .Where(j => j.UserId == userId)
@@ -66,7 +77,9 @@ namespace QuanLyChiTieu.Controllers
             // Gán ViewBag
             ViewBag.TotalRevenue = totalRevenue;
             ViewBag.TotalCost = totalCost;
-
+            ViewBag.TotalBefore = totalBefore;
+            ViewBag.Month = month;
+            ViewBag.Year = year;
             return PartialView(jars);
         }
 

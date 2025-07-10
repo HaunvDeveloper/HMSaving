@@ -24,15 +24,14 @@ namespace QuanLyChiTieu.Controllers
         {
             var userId = GetCurrentUserId();
 
-            // Tổng tiền ăn trong tháng
             var totalEatingMoney = await _context.IncomeAllocations
                 .Include(i => i.Income)
-                .Where(i => i.JarId == 1 && i.Income.IncomeDate.Month == month && i.Income.IncomeDate.Year == year && i.Income.UserId == userId)
+                .Where(i => i.JarId == 1 &&
+                            i.Income.IncomeDate.Month == month &&
+                            i.Income.IncomeDate.Year == year &&
+                            i.Income.UserId == userId)
                 .SumAsync(i => i.Amount);
 
-            var averagePerDay = totalEatingMoney / DateTime.DaysInMonth(year, month);
-
-            // Chi tiêu theo ngày
             var expenses = await _context.Expenses
                 .Include(e => e.Jar)
                 .Where(e => e.JarId == 1 &&
@@ -41,27 +40,36 @@ namespace QuanLyChiTieu.Controllers
                             e.ExpenseDate.Year == year)
                 .GroupBy(e => e.ExpenseDate)
                 .Select(g => new { Date = g.Key, Total = g.Sum(e => e.Amount) })
-                .ToListAsync();
+                .ToDictionaryAsync(g => g.Date, g => g.Total);
 
             var stats = new List<EatingDayStat>();
             var daysInMonth = DateTime.DaysInMonth(year, month);
+            decimal remainingMoney = totalEatingMoney;
+            int remainingDays = daysInMonth;
 
             for (int day = 1; day <= daysInMonth; day++)
             {
                 var date = new DateTime(year, month, day);
-                var spent = expenses.FirstOrDefault(e => e.Date == DateOnly.FromDateTime(date))?.Total ?? 0;
+                var dateOnly = DateOnly.FromDateTime(date);
+                var spent = expenses.ContainsKey(dateOnly) ? expenses[dateOnly] : 0;
+
+                var adjustedAverage = remainingMoney / remainingDays;
 
                 stats.Add(new EatingDayStat
                 {
                     Date = date,
                     SpentAmount = spent,
-                    AveragePerDay = averagePerDay
+                    AveragePerDay = adjustedAverage
                 });
-            }
-            ViewBag.TotalEatingMoney = totalEatingMoney;
 
-            return PartialView(stats); // hoặc Json(stats) nếu dùng ajax
+                remainingMoney -= spent;
+                remainingDays--;
+            }
+
+            ViewBag.TotalEatingMoney = totalEatingMoney;
+            return PartialView(stats);
         }
+
 
 
         private long GetCurrentUserId()

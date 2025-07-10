@@ -22,16 +22,19 @@ namespace QuanLyChiTieu.Controllers
             return View();
         }
 
-        public IActionResult ViewByJar(long jarId)
+        public IActionResult ViewByJar(long jarId, DateOnly? fromDate, DateOnly? toDate)
         {
             var jar = _context.ExpenseJars
                 .Where(j => j.JarId == jarId)
                 .FirstOrDefault();
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
             return View(jar);
         }
 
+
         [HttpGet]
-        public async Task<IActionResult> GetTransactions(int draw, long? jarId = 0, string keyword = "")
+        public async Task<IActionResult> GetTransactions(int draw)
         {
             var userId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
@@ -82,13 +85,22 @@ namespace QuanLyChiTieu.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> GetTransactionByJar(long jarId)
+        public async Task<IActionResult> GetTransactionByJar(long jarId, DateOnly? fromDate, DateOnly? toDate)
         {
             var userId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
             // Thu nhập: Lấy những income nào có phân bổ vào hũ này
-            var incomes = await _context.IncomeAllocations
+            var incomesQuery = _context.IncomeAllocations
                 .Where(ia => ia.JarId == jarId && ia.Income.UserId == userId)
+                .AsQueryable();
+
+            if(fromDate != null && toDate != null)
+            {
+                incomesQuery = incomesQuery
+                    .Where(ia => ia.Income.IncomeDate >= fromDate && ia.Income.IncomeDate <= toDate);
+            }
+
+            var incomes = await incomesQuery
                 .Select(ia => new TransactionViewModel
                 {
                     Type = "Thu Nhập",
@@ -100,8 +112,16 @@ namespace QuanLyChiTieu.Controllers
                 .ToListAsync();
 
             // Chi tiêu: Lấy chi tiêu trong hũ
-            var expenses = await _context.Expenses
+            var expensesQuery = _context.Expenses
                 .Where(e => e.JarId == jarId && e.Jar.UserId == userId)
+                .AsQueryable();
+
+            if (fromDate != null && toDate != null)
+            {
+                expensesQuery = expensesQuery
+                    .Where(e => e.ExpenseDate >= fromDate && e.ExpenseDate <= toDate);
+            }
+            var expenses = await expensesQuery
                 .Select(e => new TransactionViewModel
                 {
                     Type = "Chi Tiêu",
@@ -120,6 +140,8 @@ namespace QuanLyChiTieu.Controllers
 
             return Json(new { data = all });
         }
+
+        
 
 
         public IActionResult CreateExpense()

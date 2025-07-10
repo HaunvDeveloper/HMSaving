@@ -5,12 +5,32 @@
     decimal totalRevenue = ViewBag.TotalRevenue ?? 0;
     decimal totalCost = ViewBag.TotalCost ?? 0;
     decimal remaining = totalRevenue - totalCost;
+    decimal totalBefore = ViewBag.TotalBefore ?? 0;
+    var month = ViewBag.Month ?? DateTime.Now.Month;
+    var year = ViewBag.Year ?? DateTime.Now.Year;
+    var firstDayOfMonth = new DateTime(year, month, 1);
+    var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
 }
-
+<style>
+    .card-text{
+        white-space: nowrap !important;
+    }
+</style>
 <div class="row g-3 mb-3">
+    <!-- Tổng dư trước kỳ -->
+    <div class="col-md-3">
+        <div class="card text-white bg-warning shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">Tổng dư trước tháng</h6>
+                <h4 class="card-text fs-2">
+                    @totalBefore.ToString("C", culture)
+                </h4>
+            </div>
+        </div>
+    </div>
     <!-- Tổng thu nhập -->
-    <div class="col-md-4">
-        <div class="card text-white bg-success shadow-sm">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary shadow-sm">
             <div class="card-body">
                 <h6 class="card-title">Tổng thu nhập</h6>
                 <h4 class="card-text fs-2">
@@ -21,7 +41,7 @@
     </div>
 
     <!-- Tổng chi tiêu -->
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card text-white bg-danger shadow-sm">
             <div class="card-body">
                 <h6 class="card-title">Tổng chi tiêu</h6>
@@ -33,8 +53,8 @@
     </div>
 
     <!-- Còn lại -->
-    <div class="col-md-4">
-        <div class="card text-white @(remaining >= 0 ? "bg-primary" : "bg-warning") shadow-sm">
+    <div class="col-md-3">
+        <div class="card text-white @(remaining >= 0 ? "bg-success" : "bg-danger") shadow-sm">
             <div class="card-body">
                 <h6 class="card-title">Còn lại</h6>
                 <h4 class="card-text fs-2">
@@ -64,7 +84,7 @@
                         <a href="@Url.Action("CreateExpense", "Transaction", new { jarId = jar.JarId })" class="btn btn-warning">
                             Thêm chi tiêu
                         </a>
-                        <a href="@Url.Action("ViewByJar", "Transaction", new { jarId = jar.JarId })" class="btn btn-primary">
+                        <a href="@Url.Action("ViewByJar", "Transaction", new { jarId = jar.JarId, fromDate =firstDayOfMonth.ToString("yyyy-MM-dd"), toDate = lastDayOfMonth.ToString("yyyy-MM-dd")  })" class="btn btn-primary">
                             Xem chi tiết
                         </a>
                     </div>
@@ -73,7 +93,7 @@
         </div>
     }
     <!-- Card Add Jar  -->
-    <div style="cursor:pointer;" class="col-2 btnAddJar">
+    <div style="cursor:pointer;" class="col-6 col-sm-2 btnAddJar">
         <div class="card shadow-sm">
             <div  class="card-body text-nowrap fs-4 d-flex text-center align-items-center justify-content-center flex-wrap py-3">
                 <i class="bi bi-plus-circle me-2"></i> Thêm Hũ

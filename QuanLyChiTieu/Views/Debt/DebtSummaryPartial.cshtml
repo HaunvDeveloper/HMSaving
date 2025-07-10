@@ -2,6 +2,8 @@
 @using System.Globalization
 @{
     var culture = new CultureInfo("vi-VN");
+    var quantity = Model.Count(x => x.NetDebtAmount != 0);
+    var count = 0;
 }
 <div class="row p-3">
     @foreach (var item in Model)
@@ -12,46 +14,65 @@
                     <div>
                         <h5 class="card-title">@item.PartnerName</h5>
                         <p class="card-text">
-                            @if (item.NetDebtAmount > 0)
+                            @if (item.NetDebtAmount == 0)
                             {
-                                <span class="text-success">Đang thiếu bạn:</span>
+                                <span class="badge bg-secondary">Không có công nợ</span>
                             }
-                            else if (item.NetDebtAmount < 0)
+                            else if (item.NetDebtAmount > 0)
                             {
-                                <span class="text-danger">Bạn đang nợ:</span>
+                                <span class="badge bg-success">Đang thiếu bạn</span>
                             }
                             else
                             {
-                                <span class="text-success">Không có công nợ: </span>
-                                ;
+                                <span class="badge bg-danger">Bạn đang nợ</span>
                             }
-                            <strong>@Math.Abs(item.NetDebtAmount).ToString("C", culture) VNĐ</strong>
+                            <strong class="badge ">@Math.Abs(item.NetDebtAmount).ToString("C", culture) VNĐ</strong>
                         </p>
-                    </div>
-                    
-                    <div>
 
-                        
+                    </div>
+
+                    <div class="mt-2">
+
+                        <a asp-action="DebtHistory" asp-route-partnerId="@item.PartnerId" class="btn btn-primary btn-sm">
+                            <i class="bi bi-clock-history"></i> Lịch Sử
+                        </a>
+
+
                         @if (item.NetDebtAmount > 0)
                         {
-                            <a asp-action="PayDebt" asp-route-partnerId="@item.PartnerId" asp-route-in-debt="0" class="btn btn-outline-success btn-sm">
+                            <a asp-action="PayDebt" asp-route-partnerId="@item.PartnerId" asp-route-in-debt="0" class="btn btn-success btn-sm">
                                 <i class="bi bi-cash-coin"></i> Thu Nợ
                             </a>
                         }
                         else if (item.NetDebtAmount < 0)
                         {
-                            <a asp-action="PayDebt" asp-route-partnerId="@item.PartnerId" asp-route-in-debt="1" class="btn btn-outline-warning btn-sm">
+                            <a asp-action="PayDebt" asp-route-partnerId="@item.PartnerId" asp-route-in-debt="1" class="btn btn-warning btn-sm">
                                 <i class="bi bi-wallet2"></i> Trả Nợ
                             </a>
                         }
-                        
-                            <a asp-action="CreateDebt" asp-route-partnerId="@item.PartnerId" class="btn btn-outline-danger btn-sm">
-                                <i class="bi bi-wallet2"></i> Thêm Nợ
-                            </a>
+
+                        <a asp-action="CreateDebt" asp-route-partnerId="@item.PartnerId" class="btn btn-danger btn-sm">
+                            <i class="bi bi-wallet2"></i> Thêm Nợ
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
+        count++;
+        if (count == quantity)
+        {
+
+            <div class="col-12 mb-3">
+                <div class="alert alert-info text-center">
+                    <strong>Tổng cộng: @quantity người có công nợ</strong>
+                </div>
+            </div>
+
+            <hr />
+
+
+
+        }
     }
 </div>
 

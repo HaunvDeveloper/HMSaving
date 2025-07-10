@@ -1,26 +1,14 @@
 ﻿@model PayDebtViewModel
+
 @{
-    ViewData["Title"] = "Trả/Thu Nợ";
+    ViewData["Title"] = "Cập nhật giao dịch trả/thu nợ";
     var culture = new System.Globalization.CultureInfo("vi-VN");
 }
 
 <div class="container mb-3 p-4">
+    <h3 class="fs-1">Cập nhật Giao dịch với @Model.PartnerName</h3>
 
-
-    <h3 class="fs-1">Trả/Thu Nợ với @Model.PartnerName</h3>
-
-    <p>
-        @if (Model.NetDebtAmount > 0)
-        {
-            <span class="text-success fs-3">đang nợ bạn: <strong>@Model.NetDebtAmount.ToString("C", culture)</strong></span>
-        }
-        else
-        {
-            <span class="text-danger fs-3">Bạn đang nợ: <strong>@Math.Abs(Model.NetDebtAmount).ToString("C", culture)</strong></span>
-        }
-    </p>
-
-    <form asp-action="PayDebt" method="post" class="needs-validation" novalidate>
+    <form asp-action="EditPayDebt" method="post" class="needs-validation" novalidate>
         <input type="hidden" asp-for="PartnerId" />
         <input type="hidden" asp-for="PartnerName" />
         <input type="hidden" asp-for="NetDebtAmount" />
@@ -28,26 +16,16 @@
         <div class="mb-3">
             <label asp-for="InDebt" class="form-label">Hành động</label>
             <select asp-for="InDebt" class="form-select">
-                @if (Model.NetDebtAmount > 0)
-                {
-                    <option value="true">Trả nợ</option>
-                    <option selected value="false">Thu nợ</option>
-
-                }
-                else
-                {
-                    <option value="false">Thu nợ</option>
-                    <option selected value="true">Trả nợ</option>
-                }
+                <option value="true" selected="@(Model.InDebt)">Trả nợ</option>
+                <option value="false" selected="@(!Model.InDebt)">Thu nợ</option>
             </select>
         </div>
 
         <div class="mb-3">
             <label asp-for="Amount" class="form-label">Số tiền (VNĐ)</label>
             <div class="input-group">
-                <input asp-for="Amount" id="AmountInput" class="form-control text-end" placeholder="0" value="" required />
-                <span class="input-group-text">.000 VNĐ</span>
-                <button id="btn-payfull" class="input-group-text btn btn-primary" type="button">Trả hết</button>
+                <input asp-for="Amount" value="@Math.Round(Model.Amount)" id="AmountInput" class="form-control text-end" placeholder="0" required />
+                <span class="input-group-text">VNĐ</span>
             </div>
             <div class="invalid-feedback">Vui lòng nhập số tiền.</div>
         </div>
@@ -62,21 +40,17 @@
             <textarea asp-for="Description" class="form-control"></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary">Lưu</button>
-        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        <div class="mb-1">
+            <span class="text-danger">@ViewBag.ErrorMessage</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Cập nhật</button>
+        <a asp-action="DebtHistory" asp-route-partnerId="@Model.PartnerId" class="btn btn-secondary">Quay lại</a>
     </form>
 </div>
+
 @section Scripts {
     <script>
-
-        document.getElementById("btn-payfull").addEventListener("click", function () {
-            var netDebtAmount = '@(Math.Round(Model.NetDebtAmount/1000))';
-            const amountInput = document.getElementById("AmountInput");
-            amountInput.value = netDebtAmount;
-            amountInput.dispatchEvent(new Event("input")); // Trigger input event to format the value
-        });
-
-
         const input = document.getElementById("AmountInput");
         input.addEventListener("input", function () {
             let value = this.value.replace(/,/g, "").replace(/[^\d]/g, "");
@@ -87,7 +61,6 @@
             }
         });
 
-        // Trigger input
         input.dispatchEvent(new Event("input"));
 
         (() => {

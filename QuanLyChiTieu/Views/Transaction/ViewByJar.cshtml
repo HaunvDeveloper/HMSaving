@@ -126,7 +126,7 @@
                     if (result.isConfirmed) {
                         window.location.href = '@Url.Action("CreateIncome", "Transaction")';
                     } else if (result.dismiss === Swal.DismissReason.cancel) {
-                        window.location.href = '@Url.Action("CreateExpense", "Transaction")';
+                        window.location.href = '@Url.Action("CreateExpense", "Transaction", new{jarId=Model.JarId})';
                     }
                 });
             }

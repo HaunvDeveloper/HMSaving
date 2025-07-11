@@ -32,7 +32,8 @@ public partial class QlchiTieuContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    { }
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Data Source=168.231.122.98;Initial Catalog=QLChiTieu;User ID=sa;Password=NguyenH@u100304;Trust Server Certificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -124,9 +125,9 @@ public partial class QlchiTieuContext : DbContext
         {
             entity.ToTable("Partner");
 
-            entity.Property(e => e.BalanceAmountDebt).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Description).HasMaxLength(100);
             entity.Property(e => e.PartnerName).HasMaxLength(100);
+            entity.Property(e => e.UserId).HasDefaultValue(0L);
         });
 
         modelBuilder.Entity<PayDebt>(entity =>

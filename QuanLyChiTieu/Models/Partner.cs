@@ -11,7 +11,7 @@ public partial class Partner
 
     public string? Description { get; set; }
 
-    public decimal BalanceAmountDebt { get; set; }
+    public long? UserId { get; set; }
 
     public virtual ICollection<Debt> Debts { get; set; } = new List<Debt>();
 

@@ -4,11 +4,21 @@
 }
 
 <div class="container mt-4 p-3">
-    <h2 class="text-center text-uppercase">Danh sách Con Nợ</h2>
-    <div class="mb-3 d-none d-md-block">
-        <button id="btnAddDesktop" class="btn btn-success btnAddPartner">
-            <i class="bi bi-plus-lg"></i> Thêm đối tác
-        </button>
+    <h2 class="text-center text-uppercase">Danh sách Đối tác</h2>
+    <div class="mb-3 mt-3 d-flex gap-2 justify-content-between">
+        <div class="d-flex flex-wrap gap-2">
+            <button id="btnAddDesktop" class="btn btn-success btnAddPartner  d-none d-md-block">
+                <i class="bi bi-plus-lg"></i> Thêm đối tác
+            </button>
+            <a href="/Debt/CreateDebtTogether" class="btn btn-primary fst-normal">
+                <i class="bi bi-plus-lg"></i> Chia nợ chung
+                </a>
+        </div>
+        
+        <!--Searching-->
+        <div class="input-group w-50">
+            <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm đối tác...">
+        </div>
     </div>
     <div id="debtSummaryContainer"></div>
 
@@ -25,32 +35,22 @@
     <script>
         $(document).ready(function () {
 
+            // Load the debt summary partial view
+            $('#debtSummaryContainer').html('<h6>Đang tải dữ liệu...</h6>')
             $('#debtSummaryContainer').load('/Debt/DebtSummaryPartial');
-            // Add event listener for opening and closing details
-            $('#transactionsTable tbody').on('click', 'td.details-control', function () {
-                var tr = $(this).closest('tr');
-                var row = table.row(tr);
+            
 
-                if (row.child.isShown()) {
-                    // Close
-                    row.child.hide();
-                    tr.removeClass('shown');
-                } else {
-                    // Open
-                    var data = row.data();
-                    if (data.type === "Thu Nhập" && data.allocations && data.allocations.length > 0) {
-                        var html = '<table class="table table-sm table-bordered mb-0">';
-                        html += '<thead><tr class="table-info"><th>Hũ</th><th>Số tiền</th></tr></thead><tbody>';
-                        data.allocations.forEach(function (alloc) {
-                            html += '<tr><td>' + alloc.jarName + '</td><td>' + parseFloat(alloc.amount).toLocaleString("vi-VN") + ' VNĐ</td></tr>';
-                        });
-                        html += '</tbody></table>';
-                        row.child(html).show();
+            // Search functionality
+            $('#searchInput').on('input', function () {
+                var searchTerm = $(this).val().toLowerCase();
+                $('#debtSummaryContainer .partner-card').each(function () {
+                    var partnerName = $(this).data('partner-name').toLowerCase();
+                    if (partnerName.includes(searchTerm)) {
+                        $(this).show();
                     } else {
-                        row.child('<em>Không có dữ liệu chi tiết.</em>').show();
+                        $(this).hide();
                     }
-                    tr.addClass('shown');
-                }
+                });
             });
 
 

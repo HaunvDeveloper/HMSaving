@@ -27,6 +27,7 @@ namespace QuanLyChiTieu.Controllers
             var userId = GetCurrentUserId();
 
             var data = await _context.Partners
+                .Where(p => p.UserId == userId)
                 .Select(p => new PartnerDebtViewModel
                 {
                     PartnerId = p.PartnerId,
@@ -50,7 +51,8 @@ namespace QuanLyChiTieu.Controllers
 
         public IActionResult DebtHistory(long partnerId)
         {
-            var partner = _context.Partners.FirstOrDefault(p => p.PartnerId == partnerId);
+            long userId = GetCurrentUserId();
+            var partner = _context.Partners.FirstOrDefault(p => p.PartnerId == partnerId && p.UserId == userId);
             if (partner == null) return NotFound();
             return View(partner);
         }
@@ -94,6 +96,86 @@ namespace QuanLyChiTieu.Controllers
             return Json(new { data = transactionList });
         }
 
+        public IActionResult CreateDebtTogether()
+        {
+            var partners = _context.Partners.Where(d => d.UserId == GetCurrentUserId()).ToList();
+            var model = new CreateDebtTogetherViewModel
+            {
+                Debts = partners.Select(p => new CreateDebtTogetherViewModel.DebtItem
+                {
+                    PartnerId = p.PartnerId,
+                    PartnerName = p.PartnerName,
+                    Amount = 0
+                }).ToList()
+            };
+            ViewBag.Partners = partners;
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateDebtTogether(CreateDebtTogetherViewModel model)
+        {
+
+            var debts = new List<Debt>();
+
+            var totalAmount = model.Debts.Sum(d => d.Amount);
+            var payerId = model.PayerPartnerId;
+            var userId = GetCurrentUserId();
+            foreach (var item in model.Debts)
+            {
+                if (item.Amount <= 0) continue;
+
+                if (model.InDebt)
+                {
+                    // Tôi nợ người trả
+                    debts.Add(new Debt
+                    {
+                        PartnerId = item.PartnerId,
+                        Amount = item.Amount * 1000,
+                        InDebt = true, // tôi nợ họ
+                        DebtDate = model.DebtDate,
+                        Description = $"[Nhận tiền] {model.Description}",
+                        UserId = userId
+                    });
+                }
+                else if (payerId == null || item.PartnerId != payerId)
+                {
+                    // Các đối tác khác nợ người trả
+                    debts.Add(new Debt
+                    {
+                        PartnerId = item.PartnerId,
+                        Amount = item.Amount * 1000,
+                        InDebt = false, // họ nợ tôi hoặc người trả
+                        DebtDate = model.DebtDate,
+                        Description = $"[Chia nợ] {model.Description}",
+                        UserId = userId
+                    });
+                }
+            }
+
+            if (payerId != null && !model.InDebt)
+            {
+                // Tôi nợ người trả phần còn lại
+                var myDebtAmount = model.Debts.Where(d => d.PartnerId != payerId).Sum(d => d.Amount);
+                debts.Add(new Debt
+                {
+                    PartnerId = payerId.Value,
+                    Amount = myDebtAmount * 1000,
+                    InDebt = true, // tôi nợ họ
+                    DebtDate = model.DebtDate,
+                    Description = $"[Chia nợ - tổng] {model.Description}",
+                    UserId = userId
+                });
+            }
+
+            _context.Debts.AddRange(debts);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index");
+        }
+
+
 
         [HttpGet]
         public IActionResult CreateDebt()
@@ -104,7 +186,10 @@ namespace QuanLyChiTieu.Controllers
                
             };
 
-            ViewBag.Partners = _context.Partners.ToList();
+            var userId = GetCurrentUserId();
+            ViewBag.Partners = _context.Partners
+                .Where(p => p.UserId == userId)
+                .ToList();
             return View(viewModel);
         }
 
@@ -112,15 +197,18 @@ namespace QuanLyChiTieu.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult CreateDebt(CreateDebtViewModel model)
         {
+            var userId = GetCurrentUserId(); // Viết hàm lấy userId từ Claims
+
             if (!ModelState.IsValid)
             {
 
-                ViewBag.Partners = _context.Partners.ToList();
+                ViewBag.Partners = _context.Partners
+                    .Where(p => p.UserId == userId)
+                    .ToList();
 
                 return View(model);
             }
 
-            var userId = GetCurrentUserId(); // Viết hàm lấy userId từ Claims
 
             var debt = new Debt
             {
@@ -144,6 +232,7 @@ namespace QuanLyChiTieu.Controllers
         public IActionResult PayDebt(long partnerId)
         {
             var partner = _context.Partners
+                .Where(p => p.UserId == GetCurrentUserId())
                 .Include(p => p.Debts)
                 .Include(p => p.PayDebts)
                 .FirstOrDefault(p => p.PartnerId == partnerId);
@@ -170,7 +259,16 @@ namespace QuanLyChiTieu.Controllers
         public async Task<IActionResult> PayDebt(PayDebtViewModel model)
         {
             if (!ModelState.IsValid)
+            {
+                ViewBag.Partners = _context.Partners
+                    .Where(p => p.UserId == GetCurrentUserId())
+                    .ToList();
+                if (model.PartnerId == 0 || model.Amount <= 0)
+                {
+                    ViewBag.ErrorMessage = "Vui lòng chọn đối tác và nhập số tiền hợp lệ.";
+                }
                 return View(model);
+            }
 
             var payDebt = new PayDebt
             {
@@ -204,7 +302,10 @@ namespace QuanLyChiTieu.Controllers
                 Description = debt.Description
             };
 
-            ViewBag.Partners = _context.Partners.ToList();
+            var userId = GetCurrentUserId();
+            ViewBag.Partners = _context.Partners
+                .Where(p => p.UserId == userId)
+                .ToList();
             return View(viewModel);
         }
 
@@ -214,7 +315,10 @@ namespace QuanLyChiTieu.Controllers
         {
             if (model.PartnerId == 0 && model.Amount <= 0)
             {
-                ViewBag.Partners = _context.Partners.ToList();
+                var userId = GetCurrentUserId();
+                ViewBag.Partners = _context.Partners
+                    .Where(p => p.UserId == userId)
+                    .ToList();
                 ViewBag.ErrorMessage = "Vui lòng chọn đối tác và nhập số tiền hợp lệ.";
                 return View(model);
             }
@@ -268,7 +372,10 @@ namespace QuanLyChiTieu.Controllers
                 InDebt = payDebt.InDebt
             };
 
-            ViewBag.Partners = _context.Partners.ToList();
+            var userId = GetCurrentUserId();
+            ViewBag.Partners = _context.Partners
+                .Where(p => p.UserId == userId)
+                .ToList();
             return View(viewModel);
         }
 
@@ -278,7 +385,10 @@ namespace QuanLyChiTieu.Controllers
         {
             if (model.PartnerId == 0 && model.Amount <= 0)
             {
-                ViewBag.Partners = _context.Partners.ToList();
+                var userId = GetCurrentUserId();
+                ViewBag.Partners = _context.Partners
+                    .Where(p => p.UserId == userId)
+                    .ToList();
                 ViewBag.ErrorMessage = "Vui lòng chọn đối tác và nhập số tiền hợp lệ.";
                 return View(model);
             }

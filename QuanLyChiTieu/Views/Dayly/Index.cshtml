@@ -1,4 +1,8 @@
-﻿@section Links{
+﻿@{
+    ViewData["Title"] = "Thống kê chi tiêu hàng ngày";
+    long tienAnId = ViewBag.TienAnId as long? ?? 0;
+}
+@section Links{
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css" integrity="sha256-Qsx5lrStHZyR9REqhUF8iQt73X06c8LGIUPzpOhwRrI=" crossorigin="anonymous"><!--end::Third Party Plugin(Bootstrap Icons)--><!--begin::Required Plugin(AdminLTE)-->
     <link href="~/css/dayly.css" rel="stylesheet" asp-append-version="true" />
 }
@@ -117,6 +121,8 @@
             }
 
             const [year, month] = dateValue.split("-");
+
+            $("#statsContainer").html('<h6>Đang tải dữ liệu...</h6>')
             $.get("/Dayly/GetDayLy", { month, year }, function (html) {
                 $("#statsContainer").html(html);
                 updateCurrencyDisplay();
@@ -152,7 +158,7 @@
 
 
                 $('#viewDetailBtn').off('click').on('click', function () {
-                    window.location.href = `/transaction/ViewByJar?jarId=1&fromDate=${date}&toDate=${date}`;
+                    window.location.href = `/transaction/ViewByJar?jarId=@tienAnId&fromDate=${date}&toDate=${date}`;
                 });
 
                 $('#dayDetailModal').modal('show');
@@ -188,7 +194,7 @@
                     if (result.isConfirmed) {
                         window.location.href = '@Url.Action("CreateIncome", "Transaction")';
                     } else if (result.dismiss === Swal.DismissReason.cancel) {
-                        window.location.href = '@Url.Action("CreateExpense", "Transaction", new {jarId=1})';
+                        window.location.href = '@Url.Action("CreateExpense", "Transaction", new { jarId = tienAnId })';
                     }
                 });
             }

@@ -5,10 +5,10 @@
     var quantity = Model.Count(x => x.NetDebtAmount != 0);
     var count = 0;
 }
-<div class="row p-3">
+<div class="row ">
     @foreach (var item in Model)
     {
-        <div class="col-12 mb-3">
+        <div class="partner-card col-12 mb-3" data-partner-name="@item.PartnerName">
             <div class="card shadow-sm border-@((item.NetDebtAmount >= 0) ? "success" : "danger")">
                 <div class="card-body d-flex align-items-center justify-content-between flex-wrap">
                     <div>
@@ -26,7 +26,7 @@
                             {
                                 <span class="badge bg-danger">Bạn đang nợ</span>
                             }
-                            <strong class="badge ">@Math.Abs(item.NetDebtAmount).ToString("C", culture) VNĐ</strong>
+                            <strong class="badge ">@Math.Abs(item.NetDebtAmount).ToString("C", culture) </strong>
                         </p>
 
                     </div>
@@ -59,16 +59,16 @@
             </div>
         </div>
         count++;
-        if (count == quantity)
+        if (count == quantity && quantity != 0)
         {
+            <hr />
 
             <div class="col-12 mb-3">
                 <div class="alert alert-info text-center">
-                    <strong>Tổng cộng: @quantity người có công nợ</strong>
+                    <strong>Các đối tác không có công nợ</strong>
                 </div>
             </div>
 
-            <hr />
 
 
 

@@ -15,18 +15,21 @@ namespace QuanLyChiTieu.Controllers
         {
             _context = context;
         }
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            var tienAnId = await GetEatingId();
+            ViewBag.TienAnId = tienAnId;
             return View();
         }
 
         public async Task<IActionResult> GetDayLy(int month, int year)
         {
             var userId = GetCurrentUserId();
-
+            var tienAnId = await GetEatingId();
+            ViewBag.TienAnId = tienAnId;
             var totalEatingMoney = await _context.IncomeAllocations
                 .Include(i => i.Income)
-                .Where(i => i.JarId == 1 &&
+                .Where(i => i.JarId == tienAnId &&
                             i.Income.IncomeDate.Month == month &&
                             i.Income.IncomeDate.Year == year &&
                             i.Income.UserId == userId)
@@ -34,7 +37,7 @@ namespace QuanLyChiTieu.Controllers
 
             var expenses = await _context.Expenses
                 .Include(e => e.Jar)
-                .Where(e => e.JarId == 1 &&
+                .Where(e => e.JarId == tienAnId &&
                             e.Jar.UserId == userId &&
                             e.ExpenseDate.Month == month &&
                             e.ExpenseDate.Year == year)
@@ -70,7 +73,26 @@ namespace QuanLyChiTieu.Controllers
             return PartialView(stats);
         }
 
-
+        private async Task<long> GetEatingId()
+        {
+            var userId = GetCurrentUserId();
+            var tienAnId = await _context.ExpenseJars
+                .Where(j => j.JarName.ToLower() == "tiền ăn" && j.UserId == userId)
+                .Select(j => j.JarId)
+                .FirstOrDefaultAsync();
+            if (tienAnId == 0)
+            {
+                var newJar = new ExpenseJar
+                {
+                    JarName = "Tiền ăn",
+                    UserId = GetCurrentUserId()
+                };
+                _context.ExpenseJars.Add(newJar);
+                await _context.SaveChangesAsync();
+                tienAnId = newJar.JarId;
+            }
+            return tienAnId;
+        }
 
         private long GetCurrentUserId()
         {

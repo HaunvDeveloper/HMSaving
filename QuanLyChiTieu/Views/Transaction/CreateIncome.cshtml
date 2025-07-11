@@ -141,14 +141,16 @@
             console.log(sum, total);
             if (sum > total) {
                 alert.classList.remove('d-none');
-                alert.textContent = 'Tổng phân bổ vượt quá tổng thu nhập!';
+                var sumTotal = (sum - total) * 1000;
+                alert.textContent = 'Tổng phân bổ vượt quá tổng thu nhập! Dư ' + parseFloat(sumTotal).toLocaleString('vi-VN')+ ' đ';
                 //disable button submit
                 submitButton.disabled = true;
                 return false;
             } 
             else if(sum < total){
                 alert.classList.remove('d-none');
-                alert.textContent = 'Tổng phân bổ chưa đủ tổng thu nhập!';
+                var missingAmount = (total - sum) * 1000;
+                alert.textContent = 'Tổng phân bổ chưa đủ tổng thu nhập! Thiếu ' + parseFloat(missingAmount).toLocaleString('vi-VN') + ' đ';
                 //disable button submit
                 submitButton.disabled = true;
                 return false;
@@ -171,5 +173,9 @@
             });
             validateAllocation();
         });
+
+
+        //focus AmountInput
+        document.getElementById('TotalAmountInput').focus();
     </script>
 }

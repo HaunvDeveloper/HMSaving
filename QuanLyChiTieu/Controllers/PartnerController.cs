@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyChiTieu.Models;
+using System.Security.Claims;
 
 namespace QuanLyChiTieu.Controllers
 {
@@ -22,11 +23,13 @@ namespace QuanLyChiTieu.Controllers
         {
             if (string.IsNullOrWhiteSpace(dto.PartnerName))
                 return BadRequest("Tên đối tác không hợp lệ.");
+            var userId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
             var partner = new Partner
             {
                 PartnerName = dto.PartnerName,
-                Description = ""
+                Description = "",
+                UserId = userId
             };
             _context.Partners.Add(partner);
             await _context.SaveChangesAsync();

@@ -136,7 +136,8 @@
                     @if (day != null)
                     {
                         var isToday = day.Date.Date == today;
-                        var borderClass = day.Difference > 0 ? "success" : "danger";
+                        var borderClass = day.Difference < 0 ? "danger" : ((day.Difference / (day.AveragePerDay == 0 ? 1 : day.AveragePerDay)) < (decimal)0.3 ? "warning" : "success");
+                        
                         var highlightClass = isToday ? "bg-info bg-opacity-25 border-3" : "";
 
                         <div class="card shadow-sm border-@borderClass @highlightClass h-100 calendar-day-card user-select-none"
@@ -149,6 +150,7 @@
                             <div class="card-body p-1">
                                 <h6 class="text-@borderClass date-name fw-bold">
                                     <span class="hidden-sm">Ngày</span> @day.Date.Day
+                                    
                                 </h6>
                                 <div>
                                     <div class="hidden-sm">
@@ -158,7 +160,7 @@
                                     <div class="hidden-sm"><strong>Chi:</strong> <span class="text-danger fw-bold">@day.SpentAmount.ToString("C0", culture)</span></div>
                                     <div>
                                         <strong class="hidden-sm">Còn:</strong>
-                                        <span class="text-@(day.Difference > 0 ? "success  fw-bold" : "danger fw-bold") diff-amount" data-amount="@day.Difference">
+                                        <span class="fw-bold text-@(borderClass) diff-amount" data-amount="@day.Difference">
                                             @(day.Difference >= 0 ? "+" : "-")@Math.Abs(day.Difference).ToString("C0", culture)
                                         </span>
                                     </div>

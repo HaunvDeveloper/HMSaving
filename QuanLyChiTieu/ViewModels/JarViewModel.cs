@@ -4,20 +4,22 @@
     {
         public long JarId { get; set; }
         public string JarName { get; set; }
-        public decimal TotalAmount { get; set; }
+        public decimal TotalIncome { get; set; }
+        public decimal TotalExpense { get; set; }
+        public decimal TotalAmount => TotalIncome - TotalExpense;
         // Constructor to initialize the properties
-        public JarViewModel(long jarId, string jarName, decimal totalAmount)
+        public JarViewModel(long jarId, string jarName)
         {
             JarId = jarId;
             JarName = jarName;
-            TotalAmount = totalAmount;
         }
 
         public JarViewModel() 
         {
             JarId = 0;
             JarName = string.Empty;
-            TotalAmount = 0.0m;
+            TotalIncome = 0.0m;
+            TotalExpense = 0.0m;
         }
     }
 }

@@ -2,17 +2,37 @@
 @{
     ViewData["Title"] = "Chi tiết nợ";
     var culture = new System.Globalization.CultureInfo("vi-VN");
+    var currentNetAmount = ViewBag.CurrentNetAmount as decimal? ?? 0;
 }
+
+<input type="hidden" asp-for="PartnerId"/>
+<input type="hidden" asp-for="PartnerName"/>
 
 <div class="container mt-4 p-3">
     <h2 class="text-center text-uppercase">
         CHI TIẾT CÔNG NỢ VỚI <strong class="text-danger">@Model.PartnerName</strong>
     </h2>
+
     <div class="mb-3">
         <a asp-action="Index" id="btn-back" class="btn btn-secondary">
             Quay lại
         </a>
     </div>
+    <!-- Biểu đồ NetAmount -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Biểu đồ biến động công nợ</h5>
+            <canvas id="netAmountChart" height="60"></canvas>
+        </div>
+    </div>
+    <!-- Thêm hiển thị số dư hiện tại -->
+    <div class="alert fw-bold fs-5">
+        <strong></strong>
+        <span id="currentNetAmount" class="text-dark"></span>
+    </div>
+
+
+
     <div class="table-responsive">
         <table id="transactionsTable" class="table table-sm table-striped table-bordered table-hover" style="width:100%;">
             <thead>
@@ -20,6 +40,7 @@
                     <th>Loại</th>
                     <th>Ngày</th>
                     <th>Số tiền</th>
+                    <th>Số nợ lúc đó</th>
                     <th>Mô tả</th>
                     <th></th>
                 </tr>
@@ -27,112 +48,12 @@
             <tbody></tbody>
         </table>
     </div>
-
-    
 </div>
+
 @section Links {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 }
 @section Scripts {
-    <script>
-        $(document).ready(function () {
-            var table = $('#transactionsTable').DataTable({
-                "processing": true,
-                "searching": true,
-                "lengthMenu": [5, 10, 25, 50, 100],
-                "pageLength": 25,
-                "order": [], 
-                "ajax": {
-                    "url": "/Debt/GetDebtHistory",
-                    "type": "GET",
-                    "data": {
-                        partnerId: @(Model.PartnerId)
-                    }
-                },
-                "columns": [
-                    { "data": "type" },
-                    {
-                        "data": "transactionDate",
-                        "render": function (data) {
-                            var date = new Date(data);
-                            return date.toLocaleDateString("vi-VN");
-                        }
-                    },
-                    {
-                        "data": "amount",
-                        "render": function (data, type, row) {
-                            var isNegative = row.inDebt && row.state === "Debt" || !row.inDebt && row.state === "PayDebt";
-                            if (isNegative) {
-                                data = -data; // Đổi dấu nếu là Chi Tiêu
-                            }
-                            // Thêm màu cho số tiền
-                            var colorClass = isNegative ? "text-danger" : "text-success";
-                            return `<span class="fw-bold ${colorClass}">${parseFloat(data).toLocaleString('vi-VN')} VNĐ</span>`;
-                        },
-                        "className": "text-end"
-                    },
-                    { "data": "description" },
-                    {
-                        "data": "id",
-                        "render": function (data, type, row) {
-                           var editurl = row.state === "Debt" ? `/debt/editdebt/${data}` : `/debt/editpaydebt/${data}`
-                           var deleteurl = row.state === "Debt" ? `/debt/deletedebt/${data}` : `/debt/deletepaydebt/${data}`;
-                           return `<div class="text-end">
-                                        <a href="${editurl}" class="btn btn-sm btn-warning me-1" title="Chỉnh sửa">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                        <a href="#" data-url="${deleteurl}" class="btn-delete btn btn-sm btn-danger" title="Xóa">
-                                            <i class="bi bi-trash"></i>
-                                        </a>
-                                    </div>`;
-                        },
-                        "orderable": false,
-                        "className": "text-center"
-                    }
-                ],
-                "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json"
-                }
-            });
-
-
-            $(document).on('click', '.btn-delete', function(){
-                var url = $(this).data('url');
-                Swal.fire({
-                    title: 'Bạn có chắc chắn muốn xóa giao dịch này?',
-                    text: "Hành động này không thể hoàn tác!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Xóa',
-                    cancelButtonText: 'Hủy',
-                    customClass: {
-                        confirmButton: 'btn btn-danger me-2',
-                        cancelButton: 'btn btn-secondary'
-                    },
-                    buttonsStyling: false
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: url,
-                            type: 'POST',
-                            success: function (res) {
-                                if(res.status)
-                                {
-                                    showToast('success', 'Xóa thành công!');
-                                    table.ajax.reload();
-                                }
-                                else{
-                                    Swal.fire('Lỗi!', 'Không thể xóa ' + res.message, 'error');
-                                }
-                            },
-                            error: function () {
-                                Swal.fire('Lỗi!', 'Không thể xóa.', 'error');
-                            }
-                        });
-                    }
-                });
-            });
-            
-        });
-    </script>
+    <script src="~/js/debt-history.js" asp-append-version="true"></script>
 }

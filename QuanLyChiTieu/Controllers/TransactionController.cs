@@ -103,6 +103,7 @@ namespace QuanLyChiTieu.Controllers
             var incomes = await incomesQuery
                 .Select(ia => new TransactionViewModel
                 {
+                    Id = ia.Income.IncomeId,
                     Type = "Thu Nhập",
                     Date = ia.Income.IncomeDate.ToDateTime(TimeOnly.MinValue),
                     Amount = ia.Amount,
@@ -124,6 +125,7 @@ namespace QuanLyChiTieu.Controllers
             var expenses = await expensesQuery
                 .Select(e => new TransactionViewModel
                 {
+                    Id = e.ExpenseId,
                     Type = "Chi Tiêu",
                     Date = e.ExpenseDate.ToDateTime(TimeOnly.MinValue),
                     CreatedAt = e.CreatedAt,

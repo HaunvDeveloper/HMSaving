@@ -60,41 +60,71 @@ namespace QuanLyChiTieu.Controllers
         [HttpGet]
         public async Task<IActionResult> GetDebtHistory(long partnerId)
         {
+            var userId = GetCurrentUserId();
+
             var debts = await _context.Debts
-                .Where(d => d.PartnerId == partnerId && d.UserId == GetCurrentUserId())
+                .Where(d => d.PartnerId == partnerId && d.UserId == userId)
                 .Select(d => new DebtTransactionViewModel
                 {
                     Id = d.DebtId,
-                    Type = d.InDebt ? "Nợ" : "Cho nợ", // Nợ nếu là mình nợ, Cho nợ nếu là họ nợ mình
-                    State = "Debt", // Trạng thái là "Debt" cho nợ
-                    Amount = d.Amount, // Giả sử Amount lưu theo đơn vị nghìn đồng
+                    Type = d.InDebt ? "Nợ" : "Cho nợ",
+                    State = "Debt",
+                    Amount = d.Amount,
                     TransactionDate = d.DebtDate,
                     CreatedDate = d.CreatedDate,
                     Description = d.Description,
-                    InDebt = d.InDebt // true nếu là nợ, false nếu là họ nợ
+                    InDebt = d.InDebt
                 })
                 .ToListAsync();
+
             var payDebts = await _context.PayDebts
-                .Where(pd => pd.PartnerId == partnerId && pd.UserId == GetCurrentUserId())
-                    .Select(pd => new DebtTransactionViewModel
-                    {
-                        Id = pd.PayDebtId,
-                        Type = pd.InDebt ? "Trả nợ" : "Thu nợ",
-                        State = "PayDebt", // Trạng thái là "PayDebt" cho trả nợ
-                        Amount = pd.Amount, // Giả sử Amount lưu theo đơn vị nghìn đồng
-                        TransactionDate = pd.PaymentDate,
-                        CreatedDate = pd.CreatedAt,
-                        Description = pd.Description,
-                        InDebt = pd.InDebt // true nếu là nợ, false nếu là họ nợ
-                    })
+                .Where(pd => pd.PartnerId == partnerId && pd.UserId == userId)
+                .Select(pd => new DebtTransactionViewModel
+                {
+                    Id = pd.PayDebtId,
+                    Type = pd.InDebt ? "Trả nợ" : "Thu nợ",
+                    State = "PayDebt",
+                    Amount = pd.Amount,
+                    TransactionDate = pd.PaymentDate,
+                    CreatedDate = pd.CreatedAt,
+                    Description = pd.Description,
+                    InDebt = pd.InDebt
+                })
                 .ToListAsync();
+
+            // Gom hết transaction
             var transactionList = debts.Concat(payDebts)
-                .OrderByDescending(x => x.TransactionDate)
-                    .ThenByDescending(x => x.CreatedDate)
+                .OrderBy(x => x.TransactionDate)   // Quan trọng: cộng dồn từ cũ tới mới
+                .ThenBy(x => x.CreatedDate)
                 .ToList();
 
-            return Json(new { data = transactionList });
+            decimal runningNetAmount = 0;
+
+            foreach (var t in transactionList)
+            {
+                if (t.State == "Debt")
+                {
+                    if (!t.InDebt) // tôi cho nợ
+                        runningNetAmount += t.Amount;
+                    else           // tôi đi vay
+                        runningNetAmount -= t.Amount;
+                }
+                else if (t.State == "PayDebt")
+                {
+                    if (!t.InDebt) // tôi thu nợ
+                        runningNetAmount -= t.Amount;
+                    else           // tôi trả nợ
+                        runningNetAmount += t.Amount;
+                }
+
+                t.NetAmountAtThatTime = runningNetAmount;
+            }
+
+
+            // Trả về list (theo thời gian mới nhất trước, cho dễ đọc)
+            return Json(new { data = transactionList.OrderByDescending(x => x.TransactionDate).ThenByDescending(x => x.CreatedDate), currentNetAmount= runningNetAmount });
         }
+
 
         public IActionResult CreateDebtTogether()
         {
@@ -116,64 +146,133 @@ namespace QuanLyChiTieu.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateDebtTogether(CreateDebtTogetherViewModel model)
         {
-
             var debts = new List<Debt>();
-
-            var totalAmount = model.Debts.Sum(d => d.Amount);
-            var payerId = model.PayerPartnerId;
             var userId = GetCurrentUserId();
-            foreach (var item in model.Debts)
-            {
-                if (item.Amount <= 0) continue;
 
-                if (model.InDebt)
+            if (model.TabMode == "individual")
+            {
+                // ========================
+                // TAB 1: Nhập từng người
+                // ========================
+                var totalAmount = model.Debts.Sum(d => d.Amount);
+                var payerId = model.PayerPartnerId;
+
+                foreach (var item in model.Debts)
                 {
-                    // Tôi nợ người trả
+                    if (item.Amount <= 0) continue;
+
+                    if (model.InDebt)
+                    {
+                        // Tôi nợ người khác
+                        debts.Add(new Debt
+                        {
+                            PartnerId = item.PartnerId,
+                            Amount = item.Amount * 1000,
+                            InDebt = true,
+                            DebtDate = model.DebtDate,
+                            Description = $"[Nhận tiền] {model.Description}",
+                            UserId = userId
+                        });
+                    }
+                    else if (payerId == null || item.PartnerId != payerId)
+                    {
+                        // Người khác nợ người trả
+                        debts.Add(new Debt
+                        {
+                            PartnerId = item.PartnerId,
+                            Amount = item.Amount * 1000,
+                            InDebt = false,
+                            DebtDate = model.DebtDate,
+                            Description = $"[Chia nợ] {model.Description}",
+                            UserId = userId
+                        });
+                    }
+                }
+
+                if (payerId != null && !model.InDebt)
+                {
+                    var myDebtAmount = model.Debts.Where(d => d.PartnerId != payerId).Sum(d => d.Amount);
                     debts.Add(new Debt
                     {
-                        PartnerId = item.PartnerId,
-                        Amount = item.Amount * 1000,
-                        InDebt = true, // tôi nợ họ
+                        PartnerId = payerId.Value,
+                        Amount = myDebtAmount * 1000,
+                        InDebt = true, // tôi nợ người trả
                         DebtDate = model.DebtDate,
-                        Description = $"[Nhận tiền] {model.Description}",
+                        Description = $"[Chia nợ - tổng] {model.Description}",
                         UserId = userId
                     });
                 }
-                else if (payerId == null || item.PartnerId != payerId)
+            }
+            else if (model.TabMode == "shared")
+            {
+                // ========================
+                // TAB 2: Nhập chung
+                // ========================
+                if (model.SharedAmount <= 0 || model.SelectedPartnerIds == null || !model.SelectedPartnerIds.Any())
                 {
-                    // Các đối tác khác nợ người trả
+                    ViewBag.ErrorMessage = "Vui lòng nhập số tiền hợp lệ và chọn ít nhất một đối tác.";
+                    ViewBag.Partners = _context.Partners.ToList();
+                    return View(model);
+                }
+
+                var sharePerPartner = model.SharedAmount;
+                var payerId = model.PayerPartnerId;
+
+                foreach (var partnerId in model.SelectedPartnerIds)
+                {
+                    if (model.InDebt)
+                    {
+                        // Tôi nợ partner
+                        debts.Add(new Debt
+                        {
+                            PartnerId = partnerId,
+                            Amount = sharePerPartner * 1000,
+                            InDebt = true,
+                            DebtDate = model.DebtDate,
+                            Description = $"[Nhận tiền chia đều] {model.Description}",
+                            UserId = userId
+                        });
+                    }
+                    else
+                    {
+                        // Partner nợ tôi hoặc người trả
+                        if (payerId == null || partnerId != payerId)
+                        {
+                            debts.Add(new Debt
+                            {
+                                PartnerId = partnerId,
+                                Amount = sharePerPartner * 1000,
+                                InDebt = false,
+                                DebtDate = model.DebtDate,
+                                Description = $"[Chia nợ đều] {model.Description}",
+                                UserId = userId
+                            });
+                        }
+                    }
+                }
+
+                if (payerId != null && !model.InDebt)
+                {
+                    var myTotal = sharePerPartner * model.SelectedPartnerIds.Count(p => p != payerId.Value);
                     debts.Add(new Debt
                     {
-                        PartnerId = item.PartnerId,
-                        Amount = item.Amount * 1000,
-                        InDebt = false, // họ nợ tôi hoặc người trả
+                        PartnerId = payerId.Value,
+                        Amount = myTotal * 1000,
+                        InDebt = true, // tôi nợ người trả
                         DebtDate = model.DebtDate,
-                        Description = $"[Chia nợ] {model.Description}",
+                        Description = $"[Tổng chia nợ] {model.Description}",
                         UserId = userId
                     });
                 }
             }
 
-            if (payerId != null && !model.InDebt)
-            {
-                // Tôi nợ người trả phần còn lại
-                var myDebtAmount = model.Debts.Where(d => d.PartnerId != payerId).Sum(d => d.Amount);
-                debts.Add(new Debt
-                {
-                    PartnerId = payerId.Value,
-                    Amount = myDebtAmount * 1000,
-                    InDebt = true, // tôi nợ họ
-                    DebtDate = model.DebtDate,
-                    Description = $"[Chia nợ - tổng] {model.Description}",
-                    UserId = userId
-                });
-            }
-
+            // Lưu xuống DB
             _context.Debts.AddRange(debts);
             await _context.SaveChangesAsync();
 
             return RedirectToAction("Index");
         }
+
 
 
 

@@ -4,7 +4,35 @@
     var culture = new CultureInfo("vi-VN");
     var quantity = Model.Count(x => x.NetDebtAmount != 0);
     var count = 0;
+    var totalDebt = Model.Where(x => x.NetDebtAmount > 0).Sum(x => x.NetDebtAmount);
+    var totalInDebt = Model.Where(x => x.NetDebtAmount < 0).Sum(x => Math.Abs(x.NetDebtAmount));
 }
+
+<div class="row g-3 mb-3">
+    <!-- Tổng dư trước kỳ -->
+    <div class="col-md-6">
+        <div class="card text-white bg-success shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">Tổng cho nợ</h6>
+                <h4 class="card-text fs-2">
+                    @totalDebt.ToString("C", culture)
+                </h4>
+            </div>
+        </div>
+    </div>
+    <!-- Tổng thu nhập -->
+    <div class="col-md-6">
+        <div class="card text-white bg-danger shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">Tổng đang nợ</h6>
+                <h4 class="card-text fs-2">
+                    @totalInDebt.ToString("C", culture)
+                </h4>
+            </div>
+        </div>
+    </div>
+
+</div>
 <div class="row ">
     @foreach (var item in Model)
     {

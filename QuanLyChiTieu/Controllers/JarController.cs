@@ -59,18 +59,12 @@ namespace QuanLyChiTieu.Controllers
                 {
                     JarId = j.JarId,
                     JarName = j.JarName,
-                    TotalAmount =
-                        (
-                            _context.IncomeAllocations
+                    TotalIncome = _context.IncomeAllocations
                                 .Where(ia => ia.JarId == j.JarId && ia.Income.UserId == userId && ia.Income.IncomeDate.Month == month && ia.Income.IncomeDate.Year == year)
-                                .Sum(ia => (decimal?)ia.Amount) ?? 0
-                        )
-                        -
-                        (
-                            _context.Expenses
+                                .Sum(ia => (decimal?)ia.Amount) ?? 0,
+                    TotalExpense = _context.Expenses
                                 .Where(e => e.JarId == j.JarId && e.ExpenseDate.Month == month && e.ExpenseDate.Year == year)
                                 .Sum(e => (decimal?)e.Amount) ?? 0
-                        )
                 })
                 .ToListAsync();
 

@@ -14,6 +14,8 @@ namespace QuanLyChiTieu.ViewModels
 
         public decimal Amount { get; set; }
 
+        public decimal NetAmountAtThatTime { get; set; }
+
         public DateTime TransactionDate { get; set; }
 
         public DateTime CreatedDate { get; set; }

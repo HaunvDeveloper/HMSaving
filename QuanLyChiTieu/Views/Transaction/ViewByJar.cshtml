@@ -35,6 +35,7 @@
                     <th>Ngày</th>
                     <th>Số tiền</th>
                     <th>Mô tả</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -89,7 +90,27 @@
                         },
                         "className": "text-end"
                     },
-                    { "data": "description" }
+                    { "data": "description" },
+                    {
+                        "data" : "id",
+                        "render": function (data, type, row) {
+                            var urlEdit = row.type === "Thu Nhập" ?
+                                `@Url.Action("EditIncome", "Transaction")/${data}` :
+                                `@Url.Action("EditExpense", "Transaction")/${data}`;
+
+                            var urlDelete = row.type === "Thu Nhập" ?
+                                `@Url.Action("DeleteIncome", "Transaction")/${data}` :
+                                `@Url.Action("DeleteExpense", "Transaction")/${data}`;
+                            return `<div class="text-end">
+                                        <a href="${urlEdit}" class="btn btn-sm btn-warning me-1" title="Chỉnh sửa">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <a href="#" data-url="${urlDelete}" class="btn-delete btn btn-sm btn-danger" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>`;
+                        },
+                    }
                 ],
                 "language": {
                     "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json"

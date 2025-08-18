@@ -7,50 +7,105 @@
 <div class="container mt-4 p-3">
     <h2>Chia Công Nợ Chung</h2>
     <form asp-action="CreateDebtTogether" method="post" class="needs-validation" novalidate>
+        <ul class="nav nav-tabs mb-3" id="debtTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-individual-tab" data-bs-toggle="tab" data-bs-target="#tab-individual" type="button" role="tab">
+                    Nhập từng đối tác
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-shared-tab" data-bs-toggle="tab" data-bs-target="#tab-shared" type="button" role="tab">
+                    Nhập chung một số tiền
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="debtTabContent">
+            <!-- Tab 1: Nhập từng partner -->
+            <div class="tab-pane fade show active" id="tab-individual" role="tabpanel">
+                <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+                    @for (int i = 0; i < Model.Debts.Count; i++)
+                    {
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white fw-bold">
+                                    @Model.Debts[i].PartnerName
+                                </div>
+                                <div class="card-body">
+                                    <input type="hidden" asp-for="Debts[@i].PartnerId" />
+                                    <input type="hidden" asp-for="Debts[@i].PartnerName" />
+                                    <label class="form-label">Số tiền</label>
+                                    <div class="input-group">
+                                        <input asp-for="Debts[@i].Amount" type="text" class="form-control text-end amount-input" placeholder="0" value="" />
+                                        <span class="input-group-text">.000 VNĐ</span>
+                                    </div>
+                                    <span class="text-muted fst-italic">Bỏ trống nếu không có</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Tab 2: Nhập chung và chọn partner -->
+            <div class="tab-pane fade" id="tab-shared" role="tabpanel">
+                <div class="mb-3">
+                    <label class="form-label">Số tiền chia đều</label>
+                    <div class="input-group">
+                        <input type="text" id="SharedAmountInput" class="form-control text-end" placeholder="0" />
+                        <span class="input-group-text">.000 VNĐ</span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-5">
+                        <label class="form-label">Danh sách đối tác</label>
+                        <select id="allPartners" multiple class="form-select" size="10">
+                            @foreach (var p in partners)
+                            {
+                                <option value="@p.PartnerId">@p.PartnerName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex flex-column justify-content-center align-items-center">
+                        <button type="button" id="btnAddAll" class="btn btn-outline-primary mb-2">
+                            <span class="bi bi-arrow-bar-right"></span>
+                        </button>
+                        <button type="button" id="btnAddToRight" class="btn btn-outline-primary mb-2">&rarr;</button>
+                        <button type="button" id="btnRemoveFromRight" class="btn btn-outline-danger">&larr;</button>
+                        <button type="button" id="btnRemoveAll" class="btn btn-outline-danger">
+                            <span class="bi bi-arrow-bar-left"></span>
+                        </button>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Đối tác được chọn</label>
+                        <select id="selectedPartners" name="SelectedPartnerIds" multiple class="form-select" size="10"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Các trường chung -->
         <div class="mb-3">
             <label class="form-label">Loại giao dịch</label><br />
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" asp-for="InDebt" value="true" />
-                <label for="InDebt" class="form-check-label">Nhận tiền</label>
+                <input class="form-check-input" type="radio" asp-for="InDebt" value="true" checked />
+                <label class="form-check-label">Nhận tiền</label>
             </div>
             <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" asp-for="InDebt" value="false" />
-                <label for="InDebt" class="form-check-label">Trả tiền</label>
+                <label class="form-check-label">Trả tiền</label>
             </div>
         </div>
+
         <div class="mb-3">
-            <label for="PayerPartnerId" class="form-label">Người trả tiền</label>
-            <select asp-for="PayerPartnerId" class="form-select">
+            <label class="form-label">Người trả tiền</label>
+            <select asp-for="PayerPartnerId" class="form-select" id="PayerPartnerId">
                 <option value="">-- Tôi trả --</option>
                 @foreach (var partner in partners)
                 {
                     <option value="@partner.PartnerId">@partner.PartnerName</option>
                 }
             </select>
-        </div>
-
-        <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-            @for (int i = 0; i < Model.Debts.Count; i++)
-            {
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-header bg-success fw-bold">
-                            @Model.Debts[i].PartnerName
-                        </div>
-                        <div class="card-body">
-                            <input type="hidden" asp-for="Debts[@i].PartnerId" />
-                            <input type="hidden" asp-for="Debts[@i].PartnerName" />
-                            <label class="form-label">Số tiền</label>
-                            <div class="input-group">
-                                <input asp-for="Debts[@i].Amount" type="text" value="" class="form-control text-end amount-input" placeholder="0" />
-                                <span class="input-group-text">.000 VNĐ</span>
-                            </div>
-                            <!--Bỏ trống nếu không có-->
-                            <span href="#" class="text-dark fst-italic mt-2">Bỏ trống nếu không có</span>
-                        </div>
-                    </div>
-                </div>
-            }
         </div>
 
         <div class="mb-3">
@@ -63,20 +118,17 @@
             <textarea asp-for="Description" class="form-control"></textarea>
         </div>
 
-        <!-- ViewBag Error Message Alert -->
-        @if (ViewBag.ErrorMessage != null)
-        {
-            <div class="alert alert-danger" role="alert">
-                @ViewBag.ErrorMessage
-            </div>
-        }
-
+        <input type="hidden" id="TabMode" name="TabMode" value="individual" />
+        <input type="hidden" name="SharedAmount" id="SharedAmountHidden" />
 
         <button type="submit" class="btn btn-primary">Lưu</button>
         <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
     </form>
-</div>
 
+</div>
+@section Links{
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+}
 @section Scripts {
     <script>
         document.querySelectorAll(".amount-input").forEach(input => {
@@ -126,4 +178,71 @@
             }, false);
         })();
     </script>
+
+    <script>
+        // Tab tracking
+        document.querySelectorAll('#debtTab button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.getAttribute('data-bs-target');
+                document.getElementById('TabMode').value = tab === '#tab-individual' ? 'individual' : 'shared';
+            });
+        });
+
+        // Format số tiền chung
+        const sharedInput = document.getElementById("SharedAmountInput");
+        sharedInput.addEventListener("input", function () {
+            let value = this.value.replace(/,/g, "").replace(/[^\d]/g, "");
+            if (value) {
+                this.value = Number(value).toLocaleString("en-US");
+            } else {
+                this.value = "";
+            }
+            document.getElementById("SharedAmountHidden").value = value;
+        });
+
+        // Chuyển partner qua lại
+        document.getElementById("btnAddToRight").addEventListener("click", () => {
+            moveSelected("allPartners", "selectedPartners");
+        });
+
+        document.getElementById("btnRemoveFromRight").addEventListener("click", () => {
+            moveSelected("selectedPartners", "allPartners");
+        });
+
+        document.getElementById("btnAddAll").addEventListener("click", () => {
+            const allOptions = document.querySelectorAll("#allPartners option");
+            const selectedPartners = document.getElementById("selectedPartners");
+            allOptions.forEach(opt => {
+                if (!Array.from(selectedPartners.options).some(o => o.value === opt.value)) {
+                    selectedPartners.appendChild(opt);
+                }
+            });
+        });
+
+        document.getElementById("btnRemoveAll").addEventListener("click", () => {
+            const selectedPartners = document.getElementById("selectedPartners");
+            const allPartners = document.getElementById("allPartners");
+            Array.from(selectedPartners.options).forEach(opt => {
+                selectedPartners.removeChild(opt);
+                allPartners.appendChild(opt);
+            });
+        });
+
+        function moveSelected(fromId, toId) {
+            const from = document.getElementById(fromId);
+            const to = document.getElementById(toId);
+            Array.from(from.selectedOptions).forEach(opt => {
+                from.removeChild(opt);
+                to.appendChild(opt);
+            });
+        }
+
+        // Trước khi submit, đảm bảo các selected option trong tab 2 sẽ submit
+        document.querySelector("form").addEventListener("submit", () => {
+            document.querySelectorAll("#selectedPartners option").forEach(opt => {
+                opt.selected = true;
+            });
+        });
+    </script>
+
 }
